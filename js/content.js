@@ -406,8 +406,8 @@ export const CLINIC = [
     age: 58,
     track: "pain",
     side: "",
-    day: "Week 6, no surgery",
-    dayEs: "Semana 6, sin cirugía",
+    day: "Week 6, joint pain",
+    dayEs: "Semana 6, dolor articular",
     level: "ok",
     surgeon: false,
     reason: pair("Joint pain plan. Pain is down from last week.", "Plan para dolor articular. El dolor bajó desde la semana pasada."),
@@ -416,7 +416,7 @@ export const CLINIC = [
     bend: "Comfort up",
     exercises: "3 of 4",
     contact: pair("Checked in this morning.", "Hizo su registro esta mañana."),
-    story: pair("Non-surgical track. Therapy is coaching the walks. No surgeon task.", "Camino sin cirugía. Terapia acompaña las caminatas. No hay tarea para el cirujano."),
+    story: pair("Joint and muscle plan. Therapy is coaching the walks. No surgeon task.", "Plan para músculos y articulaciones. Terapia acompaña las caminatas. No hay tarea para el cirujano."),
   },
   {
     id: "helen",
@@ -440,7 +440,7 @@ export const CLINIC = [
 
 export const DEMO = [
   { href: "/welcome", title: pair("This is Recoveroo", "Esto es Recoveroo"), body: pair("Patients use only their phone. Your care team reviews your progress and reaches out when something is off.", "El paciente usa solo su teléfono. Su equipo revisa su avance y llama cuando algo no va bien.") },
-  { href: "/setup/track", title: pair("Setup is a few big steps", "La preparación son unos pasos grandes"), body: pair("Knee, hip, shoulder, or pain without surgery. A family member can tap for them.", "Rodilla, cadera, hombro, o dolor sin cirugía. Un familiar puede tocar la pantalla por ellos.") },
+  { href: "/setup/track", title: pair("Setup is a few big steps", "La preparación son unos pasos grandes"), body: pair("Knee, hip, shoulder, or muscle and joint pain. A family member can tap for them.", "Rodilla, cadera, hombro, o dolor muscular y articular. Un familiar puede tocar la pantalla por ellos.") },
   { href: "/today", title: pair("Today has three jobs", "Hoy hay tres tareas"), body: pair("Exercises, a short check-in, and one lesson. One big button starts the next job.", "Ejercicios, un registro corto y una lección. Un botón grande empieza la siguiente tarea.") },
   { href: "/exercise/quad-sets", title: pair("Moves are simple to follow", "Los ejercicios son fáciles de seguir"), body: pair("A video placeholder, a big counter, and a choice: too easy, just right, or too hard.", "Un video de muestra, un contador grande y una opción: muy fácil, bien así, o muy difícil.") },
   { href: "/checkin/pain", title: pair("One question at a time", "Una pregunta a la vez"), body: pair("Pain, swelling, sleep, medicines, and warning signs. No long forms on one screen.", "Dolor, hinchazón, sueño, medicinas y señales de alerta. No hay formularios largos en una sola pantalla.") },

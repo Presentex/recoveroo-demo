@@ -168,15 +168,15 @@ function view(html, speak, extra = {}) {
 
 function welcome() {
   const speak = L(
-    "Recoveroo. Recover at home, on your phone. For recovery after hip, knee, or shoulder surgery, and for muscle and joint pain without surgery. Your care team reviews your progress. Open the patient phone, play the guided tour, or open the care team desk.",
-    "Recoveroo. Recupérese en casa, en su teléfono. Para la recuperación después de una cirugía de cadera, rodilla u hombro, y para dolor muscular y articular sin cirugía. Su equipo revisa su avance. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
+    "Recoveroo. Recover at home, on your phone. For hip, knee, shoulder, and other joint and muscle recovery. All you need is your phone. Your care team reviews your progress. Open the patient phone, play the guided tour, or open the care team desk.",
+    "Recoveroo. Recupérese en casa, en su teléfono. Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Solo necesita su teléfono. Su equipo revisa su avance. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
   );
   return view(`
     <section class="hero-card hero-blue bleed">
       <h1>${L("Recover at home, on your phone.", "Recupérese en casa, en su teléfono.")}</h1>
       <p>${L(
-        "For recovery after hip, knee, or shoulder surgery, and for muscle and joint pain without surgery.",
-        "Para la recuperación después de una cirugía de cadera, rodilla u hombro, y para dolor muscular y articular sin cirugía.",
+        "For hip, knee, shoulder, and other joint and muscle recovery. All you need is your phone.",
+        "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Solo necesita su teléfono.",
       )}</p>
     </section>
     <div class="stack">
@@ -236,14 +236,14 @@ function setup() {
       ["knee", L("Knee replacement", "Reemplazo de rodilla")],
       ["hip", L("Hip replacement", "Reemplazo de cadera")],
       ["shoulder", L("Shoulder replacement", "Reemplazo de hombro")],
-      ["pain", L("Muscle or joint pain, no surgery", "Dolor muscular o articular, sin cirugía")],
+      ["pain", L("Muscle or joint pain", "Dolor muscular o articular")],
     ];
     return view(`
       ${setupProgress(3, total)}
       ${backLink("/setup/name", L("Back", "Atrás"))}
       ${h(L("Your plan", "Su plan"), L("What are you recovering from?", "¿De qué se está recuperando?"), "")}
       <div class="stack">${options.map(([id, label]) => choice(label, `data-action="setup-flag" data-key="track" data-value="${id}"`, s.track === id)).join("")}</div>
-    `, L("Choose knee, hip, shoulder, or pain without surgery.", "Elija rodilla, cadera, hombro, o dolor sin cirugía."), {
+    `, L("Choose knee, hip, shoulder, or muscle and joint pain.", "Elija rodilla, cadera, hombro, o dolor muscular y articular."), {
       nav: "none",
       footer: btn(L("Continue", "Seguir"), 'data-action="setup-require" data-key="track" data-href="/setup/side"'),
     });
