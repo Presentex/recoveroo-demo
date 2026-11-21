@@ -112,7 +112,7 @@ function deskNav(route) {
   ];
   return `<aside class="desk-nav">
     <button type="button" class="brand brand-on-navy" data-href="/clinic">
-      <img src="./logo.svg" width="28" height="16" alt="">
+      <img src="./logo.svg" width="41" height="22" alt="">
       <span>recoveroo</span>
     </button>
     <nav aria-label="${L("Care team desk", "Escritorio del equipo")}">
@@ -130,7 +130,7 @@ function tools(route, clinic) {
   const atMax = state.text === sizes[sizes.length - 1];
   return `<div class="tools">
     <button type="button" class="brand" data-href="${home}">
-      <img src="./logo.svg" width="28" height="16" alt="">
+      <img src="./logo.svg" width="41" height="22" alt="">
       <span>recoveroo</span>
     </button>
     <div class="tool-row">

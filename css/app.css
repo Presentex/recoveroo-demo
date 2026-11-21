@@ -85,7 +85,7 @@ p { margin: 0 0 10px; }
   padding: 0;
   color: var(--navy);
 }
-.brand img { width: 28px; height: 16px; background: transparent; }
+.brand img { width: auto; height: 22px; background: transparent; }
 .brand span {
   font-size: 20px;
   font-weight: 700;
@@ -590,7 +590,7 @@ button:active { transform: scale(0.98); }
 }
 @media (min-width: 1100px) {
   .aside { display: block; width: 260px; color: var(--navy); margin-right: 36px; }
-  .aside img { width: 36px; height: 20px; border-radius: 0; margin-bottom: 4px; background: transparent; }
+  .aside img { width: auto; height: 48px; border-radius: 0; margin: 0 0 10px; background: transparent; }
   .aside h2 { font-size: 40px; margin: 0 0 8px; letter-spacing: -0.03em; }
   .aside p { font-size: 20px; line-height: 1.35; }
   body.clinic .device { width: min(760px, calc(100vw - 380px)); }
