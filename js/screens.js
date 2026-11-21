@@ -371,7 +371,7 @@ function today() {
   const phase = phaseOf(p);
   const day = Math.max(0, dayCount(p));
   const daysOut = Math.max(0, -dayCount(p));
-  const bend = state.metrics.rom?.angle || (state.metrics.history.bend || []).at(-1) || 95;
+  const bend = state.metrics.rom?.angle || (state.metrics.history.bend || []).at(-1) || 87;
   const pain = state.metrics.checkin?.pain ?? (state.metrics.history.pain || []).at(-1) ?? 3;
   const [, joint] = trackNoun(p);
   const ringPct = phase === "preop" ? 100 : Math.min(100, Math.round((day / 90) * 100));
@@ -895,10 +895,13 @@ function bendDiagram(angle) {
 
 function sheetReading() {
   const track = state.profile.track;
-  if (track === "hip") return { angle: state.metrics.rom?.angle || 86, delta: 2, goal: 105 };
-  if (track === "shoulder") return { angle: state.metrics.rom?.angle || 96, delta: 4, goal: 120 };
-  if (track === "pain") return { angle: state.metrics.rom?.angle || 70, delta: 0, goal: null };
-  return { angle: state.metrics.rom?.angle || 95, delta: 3, goal: 110 };
+  const bends = state.metrics.history.bend || [];
+  const fallback = track === "hip" ? 86 : track === "shoulder" ? 96 : track === "pain" ? 70 : 87;
+  const angle = state.metrics.rom?.angle ?? bends.at(-1) ?? fallback;
+  const baseline = bends.length >= 7 ? bends[bends.length - 7] : bends[0];
+  const delta = baseline == null ? 0 : angle - baseline;
+  const goal = track === "hip" ? 105 : track === "shoulder" ? 120 : track === "pain" ? null : 110;
+  return { angle, delta, goal };
 }
 
 function sparkline(values) {

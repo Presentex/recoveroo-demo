@@ -201,7 +201,7 @@ function asideCopy(clinic) {
   title.textContent = clinic ? L("Care team desk", "Escritorio del equipo") : "Recoveroo";
   copy.textContent = clinic
     ? L("Sorted by who needs a person. The surgeon page is one short list.", "Ordenado por quién necesita a una persona. La página del cirujano es una lista corta.")
-    : L("At-home recovery on the phone they already have. Your care team reviews their progress.", "Recuperación en casa, en el teléfono que ya tienen. Su equipo revisa su avance.");
+    : L("At-home recovery on the phone they already have. For hip, knee, shoulder, and other joint and muscle recovery.", "Recuperación en casa, en el teléfono que ya tienen. Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones.");
 }
 
 function render() {
@@ -223,6 +223,9 @@ function render() {
   document.documentElement.lang = state.lang === "es" ? "es" : "en";
   document.documentElement.style.setProperty("--text", `${state.text}px`);
   asideCopy(clinic);
+  const hash = location.hash;
+  const sameScreen = hash === lastHash && lastHash !== "";
+  const keptScroll = sameScreen ? (document.getElementById("scroll")?.scrollTop || 0) : 0;
   app.innerHTML = `<div class="screen${clinic ? " is-desk" : ""}">
     ${tools(route, clinic)}
     <div class="scroll" id="scroll">${view.html}</div>
@@ -232,8 +235,7 @@ function render() {
     ${state.toast ? `<p class="toast" role="status">${esc(state.toast)}</p>` : ""}
   </div>`;
   const scroller = document.getElementById("scroll");
-  const hash = location.hash;
-  if (scroller && hash !== lastHash) scroller.scrollTop = 0;
+  if (scroller) scroller.scrollTop = keptScroll;
   if (hash !== lastHash) {
     window.speechSynthesis?.cancel();
     state.speaking = false;
@@ -281,7 +283,7 @@ function sampleBend(track) {
   if (track === "shoulder") return 96;
   if (track === "hip") return 86;
   if (track === "pain") return 70;
-  return 92;
+  return 87;
 }
 
 function commitBend(angle) {
@@ -615,14 +617,14 @@ const actions = {
   "rom-flow"(el) {
     const flow = Number(el.dataset.flow);
     if (flow === 2) {
-      state.metrics.romAdjust = state.profile.track === "knee" ? (state.metrics.rom?.angle || 95) : (state.metrics.rom?.angle || 90);
+      state.metrics.romAdjust = state.profile.track === "knee" ? (state.metrics.rom?.angle || 87) : (state.metrics.rom?.angle || 90);
     }
     state.metrics.rom = { ...(state.metrics.rom || {}), flow };
     save();
     render();
   },
   "rom-save"() {
-    const reading = state.profile.track === "knee" ? (state.metrics.rom?.angle || 95) : sampleBend(state.profile.track);
+    const reading = state.profile.track === "knee" ? (state.metrics.rom?.angle || 87) : sampleBend(state.profile.track);
     state.metrics.romLive = reading;
     state.metrics.romAdjust = reading;
     state.metrics.rom = { ...(state.metrics.rom || {}), angle: reading, date: TODAY, flow: 0 };

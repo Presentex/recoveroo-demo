@@ -156,7 +156,7 @@ export function sampleMetrics() {
       "ankle-pumps": { done: true, reps: 20, set: 2, feedback: "easy" },
       "short-walk": { done: false, reps: 0, set: 1, feedback: null },
     },
-    rom: { angle: 95, date: "2026-11-20", flow: 0 },
+    rom: { angle: 87, date: "2026-11-20", flow: 0 },
     romLive: null,
     questions: null,
     lastScore: 58,
@@ -170,7 +170,7 @@ export function sampleMetrics() {
     apptAck: {},
     history: {
       pain: [8, 7, 7, 6, 6, 5, 5, 4, 4, 3],
-      bend: [40, 48, 55, 62, 70, 78, 84, 88, 90, 95],
+      bend: [40, 48, 55, 62, 70, 78, 84, 88, 90, 87],
       steps: [600, 700, 800, 900, 1100, 900, 1400, 1600, 1800, 2140],
     },
     stepsToday: 2140,
