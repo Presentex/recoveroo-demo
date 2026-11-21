@@ -1,18 +1,25 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#F3F0EA" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="description" content="Recoveroo demo. At-home recovery monitoring for knee and hip replacement, with a patient app and a care team desk. Fictional data. getrecoveroo.com" />
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#13294B">
+    <meta name="description" content="Recoveroo demo. At-home recovery monitoring on your phone, with a physical therapist watching. Fictional sample.">
     <title>Recoveroo</title>
-    <script type="module" crossorigin src="./assets/index-B9_gjGdt.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CQrsEYfo.css">
+    <link rel="stylesheet" href="./css/app.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div class="page">
+      <aside class="aside">
+        <img src="./favicon.svg" width="72" height="72" alt="">
+        <h2 id="aside-title">Recoveroo</h2>
+        <p id="aside-copy">At-home recovery on the phone they already have.</p>
+      </aside>
+      <div class="device" id="device">
+        <div id="app" class="app"></div>
+      </div>
+    </div>
+    <script type="module" src="./js/main.js"></script>
   </body>
 </html>

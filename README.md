@@ -1,5 +1,14 @@
 # Recoveroo demo
 
-Clickable demo of the Recoveroo patient and care-team app. Sample data only. Not a live medical product and not connected to real patients.
+Clickable sample of the Recoveroo patient phone and care team desk. Fictional people. Not a live clinic and not medical advice.
 
-Open the site, then tap Patient or Care team.
+Open `index.html`, or the GitHub Pages site. On a wide screen the patient app sits in a phone frame. The care team desk widens.
+
+Start at the welcome screen:
+
+- Open Maria's phone for a day-18 knee recovery.
+- Play the guided tour.
+- Open the care team desk.
+- Set up someone new, including a family member helping, and a plan without surgery.
+
+Patients use only a phone. No extra sensor. Text can be read aloud, made larger, and switched to Spanish.

@@ -1,0 +1,60 @@
+import { esc } from "./store.js";
+
+const PATHS = {
+  home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M7 10.5V20h10v-9.5"/>',
+  move: '<circle cx="12" cy="5" r="2"/><path d="M12 7.5v6l-3 3M12 13.5l3 3M8 20l1.5-4M16 20l-1.5-4"/>',
+  chart: '<path d="M4 19h16"/><path d="M6 15l4-5 3 3 5-7"/>',
+  more: '<circle cx="6" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18" cy="12" r="1.4" fill="currentColor"/>',
+  speaker: '<path d="M4 10h3l4-3v10l-4-3H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18 7a7 7 0 0 1 0 10"/>',
+  phone: '<path d="M8 4h8v16H8z"/><path d="M11 17h2"/>',
+  book: '<path d="M5 5.5h6a3 3 0 0 1 3 3V20H8a3 3 0 0 0-3 3z"/><path d="M19 5.5h-6a3 3 0 0 0-3 3V20h6a3 3 0 0 1 3 3z"/>',
+  pill: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M12 8v8"/>',
+  calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+  camera: '<path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3"/>',
+  message: '<path d="M5 6h14v10H8l-3 3z"/>',
+  check: '<path d="M5 12.5 10 17l9-10"/>',
+  alert: '<path d="M12 4 3 19h18z"/><path d="M12 10v4M12 16.5v.5"/>',
+  person: '<circle cx="12" cy="8" r="3"/><path d="M6 19c1.2-3 3.2-4.5 6-4.5S16.8 16 18 19"/>',
+  back: '<path d="M15 5 8 12l7 7"/>',
+  steps: '<circle cx="12" cy="5" r="2"/><path d="M10 21l2-6 2 2 2-3"/><path d="M9 12l3 1 2-2 3 1"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="1"/>',
+};
+
+export function icon(name) {
+  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PATHS[name] || ""}</svg>`;
+}
+
+export function btn(label, extra, variant = "primary") {
+  return `<button type="button" class="btn btn-${variant}" ${extra}>${label}</button>`;
+}
+
+export function h(kicker, title, lede) {
+  return `<header class="page-head">
+    ${kicker ? `<p class="kicker">${kicker}</p>` : ""}
+    <h1>${title}</h1>
+    ${lede ? `<p class="lede">${lede}</p>` : ""}
+  </header>`;
+}
+
+export function backLink(href, label) {
+  return `<button type="button" class="back" data-href="${href}">${icon("back")}<span>${label}</span></button>`;
+}
+
+export function choice(label, extra, pressed) {
+  return `<button type="button" class="choice" aria-pressed="${pressed ? "true" : "false"}" ${extra}>${label}</button>`;
+}
+
+export function figure(motion, playing) {
+  return `<div class="stage-video ${playing ? "is-playing" : ""}" data-motion="${esc(motion)}">
+    <svg viewBox="0 0 220 140" aria-hidden="true">
+      <rect x="8" y="8" width="204" height="124" rx="16" class="vid-bg"/>
+      <circle cx="86" cy="36" r="11" class="fig"/>
+      <path d="M86 47 v28" class="fig"/>
+      <path d="M86 56 l-22 18" class="fig"/>
+      <path d="M86 58 l18 14" class="fig"/>
+      <path class="limb limb-${esc(motion)}" d="M86 75 l30 32"/>
+      <path class="fig" d="M116 107 h20"/>
+    </svg>
+    <p class="vid-label">${playing ? "" : ""}</p>
+  </div>`;
+}
