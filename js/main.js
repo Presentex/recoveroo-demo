@@ -1,5 +1,5 @@
 import { DEMO, QUESTIONS, dailyTipId, exerciseList, t } from "./content.js";
-import { celebrateCopy, renderRoute, routeOf, shareText } from "./screens.js";
+import { celebrateCopy, renderRoute, routeOf } from "./screens.js";
 import {
   L, TODAY, earn, esc, freshMetrics, hydrate, loadSample, save, state,
 } from "./store.js";
@@ -106,14 +106,14 @@ function tools(route, clinic) {
   const atMax = state.text === sizes[sizes.length - 1];
   return `<div class="tools">
     <button type="button" class="brand" data-href="${home}">
-      <img src="./logo.svg" width="22" height="12" alt="">
-      <span>Recoveroo</span>
+      <img src="./logo.svg" width="28" height="16" alt="">
+      <span>recoveroo</span>
     </button>
     <div class="tool-row">
-      <button type="button" class="tool" data-action="speak">${icon("speaker")}<span>${state.speaking ? L("Stop", "Parar") : L("Read", "Leer")}</span></button>
-      <button type="button" class="tool" data-action="text" data-dir="-1" aria-disabled="${atMin}" aria-label="${L("Smaller text", "Texto más pequeño")}">A-</button>
-      <button type="button" class="tool" data-action="text" data-dir="1" aria-disabled="${atMax}" aria-label="${L("Larger text", "Texto más grande")}">A+</button>
-      <button type="button" class="tool" data-action="lang">${state.lang === "es" ? "English" : "Español"}</button>
+      <button type="button" class="tool icon-only" data-action="speak" aria-label="${state.speaking ? L("Stop reading", "Parar") : L("Read aloud", "Leer en voz alta")}">${icon("speaker")}</button>
+      <button type="button" class="tool icon-only" data-action="text" data-dir="1" aria-disabled="${atMax}" aria-label="${L("Larger text", "Texto más grande")}">A+</button>
+      <button type="button" class="tool icon-only" data-action="text" data-dir="-1" aria-disabled="${atMin}" aria-label="${L("Smaller text", "Texto más pequeño")}">A-</button>
+      <button type="button" class="tool icon-only" data-action="lang" aria-label="${L("Spanish", "Inglés")}">${state.lang === "es" ? "EN" : "ES"}</button>
     </div>
   </div>`;
 }
@@ -121,10 +121,10 @@ function tools(route, clinic) {
 function patientNav(active) {
   const items = [
     ["/today", "home", L("Today", "Hoy"), "today"],
+    ["/checkin", "check", L("Check-in", "Registro"), "checkin"],
     ["/move", "move", L("Exercises", "Ejercicios"), "move"],
     ["/track", "chart", L("Progress", "Avance"), "track"],
-    ["/messages", "message", L("Care Team", "Equipo"), "care"],
-    ["/more", "more", L("More", "Más"), "more"],
+    ["/messages", "message", L("Care team", "Equipo"), "care"],
   ];
   return `<nav class="nav" aria-label="${L("Patient", "Paciente")}">${items.map(([href, name, label, id]) => `<button type="button" data-href="${href}" ${active === id ? 'aria-current="page"' : ""}>${icon(name)}<span>${label}</span></button>`).join("")}</nav>`;
 }
@@ -247,11 +247,113 @@ function render() {
     video.addEventListener("pause", sync);
     sync();
   });
+  armRomClip();
+  armLiveAngle();
+  armBendDrag();
 }
 
 function readField(name) {
   const node = app.querySelector(`[data-field="${name}"]`);
   return node ? node.value : "";
+}
+
+function sampleBend(track) {
+  if (track === "shoulder") return 96;
+  if (track === "hip") return 86;
+  if (track === "pain") return 70;
+  return 92;
+}
+
+function commitBend(angle) {
+  const track = state.profile.track;
+  const value = Math.max(0, Math.min(140, Math.round(Number(angle) || 0)));
+  state.metrics.romLive = value;
+  state.metrics.romAdjust = value;
+  state.metrics.rom = { ...(state.metrics.rom || {}), angle: value, date: TODAY, flow: 3 };
+  state.metrics.history.bend = [...(state.metrics.history.bend || []), value].slice(-8);
+  if (track === "knee" && value >= 90) earn("bend90");
+  save();
+  render();
+}
+
+function armRomClip() {
+  app.querySelectorAll("img.rom-poster").forEach((img) => {
+    const hide = () => { img.hidden = true; };
+    img.addEventListener("error", hide);
+    if (img.complete && img.naturalWidth === 0) hide();
+  });
+  app.querySelectorAll("video.rom-clip").forEach((video) => {
+    const missing = () => video.classList.add("is-missing");
+    video.addEventListener("error", missing);
+    if (video.error) missing();
+  });
+}
+
+function armLiveAngle() {
+  const node = app.querySelector("[data-live-angle]");
+  if (!node || !state.profile) return;
+  const end = sampleBend(state.profile.track);
+  if (reduceMotion) {
+    node.textContent = String(end);
+    state.metrics.romLive = end;
+    return;
+  }
+  const start = 36;
+  const started = performance.now();
+  const tick = (now) => {
+    if (!node.isConnected) return;
+    const progress = Math.min(1, (now - started) / 1400);
+    const value = Math.round(start + (end - start) * progress);
+    node.textContent = String(value);
+    state.metrics.romLive = value;
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function armBendDrag() {
+  const svg = app.querySelector("[data-bend-svg]");
+  if (!svg) return;
+  const kneeX = 150;
+  const kneeY = 96;
+  const len = 118;
+  const shin = svg.querySelector("[data-shin]");
+  const foot = svg.querySelector("[data-foot]");
+  const readout = app.querySelector("[data-bend-readout]");
+  const apply = (angle) => {
+    const deg = Math.max(0, Math.min(140, Math.round(angle)));
+    state.metrics.romAdjust = deg;
+    const rad = (deg * Math.PI) / 180;
+    const x2 = (kneeX + Math.cos(rad) * len).toFixed(1);
+    const y2 = (kneeY + Math.sin(rad) * len).toFixed(1);
+    shin?.setAttribute("x2", x2);
+    shin?.setAttribute("y2", y2);
+    foot?.setAttribute("cx", x2);
+    foot?.setAttribute("cy", y2);
+    if (readout) readout.textContent = String(deg);
+  };
+  const fromEvent = (event) => {
+    const point = svg.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const local = point.matrixTransform(ctm.inverse());
+    return (Math.atan2(local.y - kneeY, local.x - kneeX) * 180) / Math.PI;
+  };
+  svg.addEventListener("pointerdown", (event) => {
+    svg.setPointerCapture(event.pointerId);
+    const deg = fromEvent(event);
+    if (deg != null) apply(deg);
+  });
+  svg.addEventListener("pointermove", (event) => {
+    if (!svg.hasPointerCapture(event.pointerId)) return;
+    const deg = fromEvent(event);
+    if (deg != null) apply(deg);
+  });
+  const finish = () => save();
+  svg.addEventListener("pointerup", finish);
+  svg.addEventListener("pointercancel", finish);
 }
 
 const actions = {
@@ -491,33 +593,31 @@ const actions = {
     navigate(next ? `/exercise/${next.id}` : "/move");
   },
   "rom-flow"(el) {
-    state.metrics.rom = { ...(state.metrics.rom || {}), flow: Number(el.dataset.flow) };
+    const flow = Number(el.dataset.flow);
+    if (flow === 2 && state.metrics.romAdjust == null) {
+      const live = Number(app.querySelector("[data-live-angle]")?.textContent);
+      state.metrics.romAdjust = live || state.metrics.romLive || state.metrics.rom?.angle || 90;
+    }
+    state.metrics.rom = { ...(state.metrics.rom || {}), flow };
+    save();
+    render();
+  },
+  "rom-use"() {
+    const live = Number(app.querySelector("[data-live-angle]")?.textContent);
+    commitBend(live || state.metrics.romLive || sampleBend(state.profile.track));
+  },
+  "rom-keep"() {
+    commitBend(state.metrics.romAdjust ?? state.metrics.romLive ?? state.metrics.rom?.angle ?? 90);
+  },
+  "rom-nudge"(el) {
+    const dir = Number(el.dataset.dir) || 0;
+    const cur = state.metrics.romAdjust ?? state.metrics.rom?.angle ?? 90;
+    state.metrics.romAdjust = Math.max(0, Math.min(140, cur + dir));
     save();
     render();
   },
   "rom-capture"() {
-    const track = state.profile.track;
-    const angle = track === "shoulder" ? 96 : track === "hip" ? 86 : track === "pain" ? 70 : 92;
-    state.metrics.romLive = angle;
-    state.metrics.rom = { ...(state.metrics.rom || {}), angle, date: TODAY, flow: 3 };
-    state.metrics.history.bend = [...(state.metrics.history.bend || []), angle].slice(-8);
-    if (track === "knee" && angle >= 90) earn("bend90");
-    save();
-    render();
-  },
-  "copy-share"() {
-    const text = shareText();
-    const done = () => toast(L("Copied. You can paste it to your family.", "Copiado. Puede pegarlo para su familia."));
-    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(done);
-    else done();
-  },
-  "native-share"() {
-    const text = shareText();
-    if (navigator.share) {
-      navigator.share({ title: "Recoveroo", text }).catch(() => {});
-      return;
-    }
-    actions["copy-share"]();
+    commitBend(sampleBend(state.profile.track));
   },
   quick(el) {
     const map = {

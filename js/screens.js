@@ -722,20 +722,49 @@ function activity() {
   `, speak, { active: "move", footer: btn(L("Back to today", "Volver a hoy"), 'data-href="/today"') });
 }
 
-function dualChart(actual, expected) {
-  const w = 320;
-  const h = 150;
-  const min = 40;
-  const max = 140;
+function dualChart(actual, expected, days) {
+  const w = 340;
+  const h = 248;
+  const left = 52;
+  const right = 14;
+  const top = 36;
+  const bottom = 42;
+  const min = 0;
+  const max = 120;
   const span = max - min;
+  const plotW = w - left - right;
+  const plotH = h - top - bottom;
   const coords = (values) => values.map((value, i) => {
-    const x = 16 + (i / Math.max(1, values.length - 1)) * (w - 32);
-    const y = 18 + (1 - (Number(value) - min) / span) * (h - 40);
+    const x = left + (i / Math.max(1, values.length - 1)) * plotW;
+    const y = top + (1 - (Math.min(max, Math.max(min, Number(value))) - min) / span) * plotH;
     return [x, y];
   });
   const path = (values) => coords(values).map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
-  const dots = coords(actual).map((p) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="5" fill="#13294B"></circle>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Your bend and the sample recovery path", "Su flexión y el camino de recuperación de muestra"))}"><path d="${path(expected)}" fill="none" stroke="#0071E3" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path><path d="${path(actual)}" fill="none" stroke="#13294B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>${dots}</svg><p class="legend"><i class="swatch navy"></i> ${L("Your bend", "Su flexión")} <i class="swatch blue"></i> ${L("Sample path", "Camino de muestra")}</p>`;
+  const yLabels = [120, 80, 40, 0].map((value) => {
+    const y = top + (1 - value / span) * plotH;
+    return `<text x="2" y="${(y + 5).toFixed(1)}" fill="#13294B" font-size="15" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${value}</text>`;
+  }).join("");
+  const xLabels = (days || actual.map((_, i) => i + 1)).map((day, i) => {
+    const x = left + (i / Math.max(1, actual.length - 1)) * plotW;
+    return `<text x="${x.toFixed(1)}" y="${h - 16}" text-anchor="middle" fill="#13294B" font-size="14" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${day}</text>`;
+  }).join("");
+  const last = coords(actual).at(-1);
+  const latest = actual.at(-1);
+  const callout = last && latest != null
+    ? `<text x="${Math.max(left, last[0] - 92).toFixed(1)}" y="${Math.max(22, last[1] - 14).toFixed(1)}" fill="#13294B" font-size="16" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${latest} ${L("degrees", "grados")}</text>`
+    : "";
+  const dots = coords(actual).map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === actual.length - 1 ? 6 : 4}" fill="#13294B"></circle>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Your bend in degrees by day, and the sample path", "Su flexión en grados por día, y el camino de muestra"))}">
+    <text x="2" y="16" fill="#3a3a3c" font-size="14" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${L("Degrees", "Grados")}</text>
+    ${yLabels}
+    <path d="${path(expected)}" fill="none" stroke="#0071E3" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path>
+    <path d="${path(actual)}" fill="none" stroke="#13294B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>
+    ${dots}
+    ${callout}
+    ${xLabels}
+  </svg>
+  <p class="legend"><i class="swatch navy"></i> ${L("Your bend", "Su flexión")} <i class="swatch blue"></i> ${L("Sample path", "Camino de muestra")}</p>
+  <p class="fine">${L("Numbers under the line are days after surgery.", "Los números bajo la línea son días después de la cirugía.")}</p>`;
 }
 
 function chart(values, min, max, color) {
@@ -753,69 +782,83 @@ function chart(values, min, max, color) {
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Chart of recent readings", "Gráfica de lecturas recientes"))}"><path d="${d}" fill="none" stroke="${color}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>${dots}</svg>`;
 }
 
+function bendDiagram(angle) {
+  const kneeX = 150;
+  const kneeY = 96;
+  const len = 118;
+  const rad = (Number(angle) || 0) * Math.PI / 180;
+  const x2 = (kneeX + Math.cos(rad) * len).toFixed(1);
+  const y2 = (kneeY + Math.sin(rad) * len).toFixed(1);
+  return `<svg class="bend-svg" data-bend-svg viewBox="0 0 320 280" role="img" aria-label="${esc(L("Leg diagram. Drag the lower leg.", "Diagrama de la pierna. Arrastre la pierna de abajo."))}">
+    <rect width="320" height="280" rx="20" fill="#F4F7FB"/>
+    <line x1="36" y1="${kneeY}" x2="${kneeX}" y2="${kneeY}" stroke="#13294B" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="${kneeX}" cy="${kneeY}" r="14" fill="#13294B"/>
+    <line data-shin x1="${kneeX}" y1="${kneeY}" x2="${x2}" y2="${y2}" stroke="#0071E3" stroke-width="20" stroke-linecap="round"/>
+    <circle data-foot cx="${x2}" cy="${y2}" r="14" fill="#0071E3"/>
+  </svg>`;
+}
+
 function bend() {
   const flow = state.metrics.rom?.flow || 0;
   const track = state.profile.track;
   const word = bendWord(track);
-  if (flow === 0) {
+  if (flow === 3) {
+    const angle = state.metrics.romLive ?? state.metrics.rom?.angle;
+    const day = Math.max(0, dayCount(state.profile));
+    const exp = expectedBend(day, track);
+    const detail = angle && exp
+      ? L(`About ${angle} degrees. The sample path for this week is near ${exp} degrees.`, `Cerca de ${angle} grados. El camino de muestra para esta semana está cerca de ${exp} grados.`)
+      : L("Saved on this phone.", "Guardado en este teléfono.");
     return view(`
-      ${backLink("/move", L("Back", "Atrás"))}
-      ${h(L("Bend check", "Revisión de flexión"), L(`Check your ${word} with your phone.`, `Revise su ${word} con el teléfono.`), L("This sample does not turn on your camera.", "Esta muestra no enciende su cámara."))}
-      ${bendArt()}
-      <ol class="plain">
-        <li>${L("Sit in a firm chair.", "Siéntese en una silla firme.")}</li>
-        <li>${L("Prop the phone so it can see you from the side.", "Apoye el teléfono para que lo vea de lado.")}</li>
-        <li>${L("Move only as far as feels safe.", "Muévase solo hasta donde se sienta seguro.")}</li>
-      </ol>
-    `, L("Bend check. Sit in a firm chair and prop the phone to see you from the side. The camera stays off in this sample.", "Revisión de flexión. Siéntese en una silla firme y apoye el teléfono para verlo de lado. En esta muestra la cámara queda apagada."), {
+      ${h(L("Saved", "Guardado"), track === "pain" ? L("Comfort check", "Revisión de comodidad") : `${angle ?? "--"}°`, detail)}
+      <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
+    `, `${detail} ${L("Your physical therapist reviews this reading.", "Su fisioterapeuta revisa esta lectura.")}`, {
       active: "move",
-      footer: btn(L("Show me how", "Muéstreme cómo"), 'data-action="rom-flow" data-flow="1"'),
-    });
-  }
-  if (flow === 1) {
-    return view(`
-      ${h(L("Set the phone", "Coloque el teléfono"), L("Side view, whole limb in the frame.", "Vista de lado, toda la extremidad en el recuadro."), "")}
-      ${bendArt()}
-      <ul class="plain">
-        <li>${track === "shoulder" ? L("Turn so the sore arm faces the phone.", "Gire para que el brazo adolorido mire al teléfono.") : L("Turn so the sore leg faces the phone.", "Gire para que la pierna adolorida mire al teléfono.")}</li>
-        <li>${L("Keep the phone still. A book can prop it.", "Mantenga el teléfono quieto. Un libro puede sostenerlo.")}</li>
-        <li>${L("You will see a guide on the next screen.", "Verá una guía en la siguiente pantalla.")}</li>
-      </ul>
-    `, L("Prop the phone for a side view. Keep it still.", "Apoye el teléfono para una vista de lado. Déjelo quieto."), {
-      nav: "none",
-      footer: btn(L("I am ready", "Estoy listo"), 'data-action="rom-flow" data-flow="2"'),
+      footer: `<div class="stack">${btn(L("Check again", "Revisar de nuevo"), 'data-action="rom-flow" data-flow="1"')}${btn(L("Back", "Volver"), 'data-href="/move"', "secondary")}</div>`,
     });
   }
   if (flow === 2) {
+    const angle = state.metrics.romAdjust ?? state.metrics.rom?.angle ?? 90;
     return view(`
-      <div class="finder" data-spot="finder">
-        <p class="kicker">${L("Sample camera", "Cámara de muestra")}</p>
-        <div class="finder-frame">${bendArt()}<span class="finder-hint">${L("Fit inside the guide", "Entre en la guía")}</span></div>
-        <p class="lede">${L("Hold still. Move as far as is comfortable, then capture.", "Quédese quieto. Muévase hasta donde sea cómodo y luego capture.")}</p>
+      <p class="kicker">${L("Step 2 of 2", "Paso 2 de 2")}</p>
+      ${h(L("Bend check", "Revisión de flexión"), L("Adjust it yourself", "Ajústelo usted"), L("Drag the blue lower leg so it matches your bend. Use the buttons for a small change.", "Arrastre la pierna azul de abajo para que coincida con su flexión. Use los botones para un cambio pequeño."))}
+      <p class="live-deg" aria-live="polite"><span data-bend-readout>${angle}</span> <small>${L("degrees", "grados")}</small></p>
+      ${bendDiagram(angle)}
+      <div class="nudge">
+        ${btn(L("Minus 1", "Menos 1"), 'data-action="rom-nudge" data-dir="-1"', "secondary")}
+        ${btn(L("Plus 1", "Más 1"), 'data-action="rom-nudge" data-dir="1"', "secondary")}
       </div>
-    `, L("Sample camera. Hold still, move as far as is comfortable, then capture. The real camera is off.", "Cámara de muestra. Quédese quieto, muévase hasta donde sea cómodo y capture. La cámara real está apagada."), {
+      <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
+    `, L(`Adjust the lower leg. It is ${angle} degrees. Your physical therapist reviews this reading.`, `Ajuste la pierna de abajo. Son ${angle} grados. Su fisioterapeuta revisa esta lectura.`), {
       nav: "none",
-      footer: btn(L("Capture sample", "Capturar muestra"), 'data-action="rom-capture"'),
+      footer: btn(L("Save this reading", "Guardar esta lectura"), 'data-action="rom-keep"'),
     });
   }
-  const angle = state.metrics.romLive ?? state.metrics.rom?.angle;
-  const day = Math.max(0, dayCount(state.profile));
-  const exp = expectedBend(day, track);
-  let detail = L("Sample result saved on this phone.", "Resultado de muestra guardado en este teléfono.");
-  if (track === "pain") {
-    detail = L("Sample result: movement looks comfortable enough for today's short plan.", "Resultado de muestra: el movimiento se ve bastante cómodo para el plan corto de hoy.");
-  } else if (angle && exp) {
-    detail = L(
-      `About ${angle} degrees. The sample path for this week is near ${exp} degrees.`,
-      `Cerca de ${angle} grados. El camino de muestra para esta semana está cerca de ${exp} grados.`,
-    );
-  }
+  const kneeClip = track === "knee";
+  const cameraView = kneeClip
+    ? `<img class="rom-poster" src="assets/videos/rom-knee-bend.jpg" alt="" aria-hidden="true">
+      <video class="rom-clip" src="assets/videos/rom-knee-bend.mp4" poster="assets/videos/rom-knee-bend.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>`
+    : `<svg viewBox="0 0 320 180" aria-hidden="true">
+        <rect width="320" height="180" fill="#13294B"/>
+        <circle cx="78" cy="78" r="16" fill="#F4F7FB"/>
+        <line x1="94" y1="86" x2="150" y2="100" stroke="#F4F7FB" stroke-width="16" stroke-linecap="round"/>
+        <line x1="150" y1="100" x2="230" y2="78" stroke="#F4F7FB" stroke-width="14" stroke-linecap="round"/>
+        <line x1="230" y1="78" x2="250" y2="130" stroke="#5EEAD4" stroke-width="14" stroke-linecap="round"/>
+      </svg>`;
   return view(`
-    ${h(L("Your result", "Su resultado"), track === "pain" ? L("Comfort check", "Revisión de comodidad") : `<span data-count="${angle ?? 0}">0</span>°`, detail)}
-    <p class="fine">${L("This is a sample reading, not a measurement from your camera.", "Esta es una lectura de muestra, no una medida de su cámara.")}</p>
-  `, `${detail} ${L("This is a sample reading.", "Esta es una lectura de muestra.")}`, {
-    active: "move",
-    footer: btn(L("Save and go back", "Guardar y volver"), 'data-href="/move"'),
+    <p class="kicker">${L("Step 1 of 2", "Paso 1 de 2")}</p>
+    ${h(L("Bend check", "Revisión de flexión"), L(`Prop the phone. Side view.`, `Apoye el teléfono. Vista de lado.`), L(`Sit in a firm chair. The phone looks at your ${word} from the side.`, `Siéntese en una silla firme. El teléfono mira su ${word} de lado.`))}
+    <div class="finder-frame camera-sim${kneeClip ? " has-clip" : ""}">
+      ${cameraView}
+      <p class="live-deg on-dark" aria-live="polite"><span data-live-angle>36</span><small>${L("degrees", "grados")}</small></p>
+    </div>
+    <p class="fine">${kneeClip
+      ? L("This sample clip stands in for the camera. It does not turn on your camera. The number is the reading you can keep.", "Este video de muestra representa la cámara. No enciende su cámara. El número es la lectura que puede guardar.")
+      : L("This sample does not turn on your camera. The number stands in for a live reading.", "Esta muestra no enciende su cámara. El número representa una lectura en vivo.")}</p>
+    <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
+  `, L("Step 1. Prop the phone for a side view. A large degree number shows the bend. Your physical therapist reviews it. You can adjust it yourself if the read is not clear.", "Paso 1. Apoye el teléfono para una vista de lado. Un número grande muestra la flexión. Su fisioterapeuta la revisa. Puede ajustarla usted si la lectura no es clara."), {
+    nav: "none",
+    footer: `<div class="stack">${btn(L("Use this reading", "Usar esta lectura"), 'data-action="rom-use"')}${btn(L("Adjust it yourself", "Ajústelo usted"), 'data-action="rom-flow" data-flow="2"', "secondary")}</div>`,
   });
 }
 
@@ -830,11 +873,12 @@ function track() {
   const day = Math.max(0, dayCount(p));
   const expSeries = bends.map((_, i) => expectedBend(day - bends.length + i, p.track)).filter((n) => n != null);
   const speak = `${levelLabel(level)}. ${statusSentence()}`;
+  const days = bends.map((_, i) => Math.max(0, day - (bends.length - 1) + i));
   const curve = p.track === "pain"
     ? `<h2>${L("Pain this week", "Dolor esta semana")}</h2>${chart(state.metrics.history.pain, 0, 10, "#13294B")}<p class="fine">${L("Lower on the chart is better.", "Más abajo en la gráfica es mejor.")}</p>`
     : `<h2>${L(`Your ${bendWord(p.track)}`, `Su ${bendWord(p.track)}`)}</h2>
-      ${expSeries.length && bends.length ? dualChart(bends, expSeries) : chart(bends, 40, 140, "#13294B")}
-      ${expSeries.length ? `<p class="fine">${L(`The sample path for the latest point is about ${expSeries.at(-1)} degrees. Your latest saved bend is ${bends.at(-1) || "--"} degrees.`, `El camino de muestra del último punto es de unos ${expSeries.at(-1)} grados. Su última flexión guardada es de ${bends.at(-1) || "--"} grados.`)}</p>` : ""}`;
+      ${expSeries.length && bends.length ? dualChart(bends, expSeries, days) : chart(bends, 0, 120, "#13294B")}
+      ${expSeries.length ? `<p class="fine">${L(`Latest reading: ${bends.at(-1)} degrees. The sample path near that day is about ${expSeries.at(-1)} degrees.`, `Última lectura: ${bends.at(-1)} grados. El camino de muestra cerca de ese día es de unos ${expSeries.at(-1)} grados.`)}</p>` : ""}`;
   const latestBend = bends.at(-1);
   const bendGoal = expSeries.at(-1) || latestBend || 100;
   const bendPct = latestBend ? Math.min(100, Math.round((latestBend / bendGoal) * 100)) : 0;
@@ -861,34 +905,6 @@ function track() {
       return `<article class="badge ${on ? "is-on" : ""}">${ring(on ? 100 : 8, on ? "#087A6A" : "#C7C7CC", "")}<span><strong>${t(item.title)}</strong><em>${on ? t(item.detail) : L("Not yet", "Todavía no")}</em></span></article>`;
     }).join("")}</div>
     ${state.metrics.questions ? `<p class="lede">${L("This week's question score", "Puntaje de las preguntas de esta semana")}: ${state.metrics.questions.score}</p>` : `<button type="button" class="text-link" data-href="/questions">${L("Answer this week's questions", "Responder las preguntas de esta semana")}</button>`}
-  `, speak, { active: "track", footer: btn(L("Share this week with family", "Compartir la semana con la familia"), 'data-href="/share"', "coral") });
-}
-
-export function shareText() {
-  const p = state.profile;
-  const m = state.metrics;
-  const pain = m.checkin?.pain ?? m.history.pain.at(-1);
-  const bend = m.rom?.angle ?? m.history.bend.at(-1);
-  const level = levelLabel(phoneLevel(p, m));
-  if (!p) return "";
-  const name = p.patientName?.split(" ")[0] || "Maria";
-  if (state.lang === "es") {
-    return `Semana de ${name} en Recoveroo. ${phaseLine(p)}. Estado: ${level}. Dolor reciente: ${pain ?? "sin dato"}. ${p.track === "pain" ? "" : `Flexión: ${bend ?? "sin dato"} grados. `}Pasos de hoy: ${m.stepsToday}. Nota de Sarah Chen, PT: va con calma y seguro. Siga con la caminata corta. Esta nota es una muestra.`;
-  }
-  return `${name}'s week on Recoveroo. ${phaseLine(p)}. Status: ${level}. Recent pain: ${pain ?? "no reading"}. ${p.track === "pain" ? "" : `Bend: ${bend ?? "no reading"} degrees. `}Steps today: ${m.stepsToday}. Note from Sarah Chen, PT: steady and safe. Keep the short walk. This note is a sample.`;
-}
-
-function share() {
-  const text = shareText();
-  const speak = text;
-  return view(`
-    ${backLink("/track", L("Back", "Atrás"))}
-    ${h(L("For the family", "Para la familia"), L("This week, in a few lines.", "Esta semana, en pocas líneas."), "")}
-    <article class="letter"><p>${esc(text)}</p></article>
-    <div class="stack">
-      ${btn(L("Copy the note", "Copiar la nota"), 'data-action="copy-share"', "secondary")}
-      ${btn(L("Share from this phone", "Compartir desde este teléfono"), 'data-action="native-share"', "secondary")}
-    </div>
   `, speak, { active: "track" });
 }
 
@@ -1231,7 +1247,6 @@ export function renderRoute(route) {
     case "activity": return activity();
     case "bend": return bend();
     case "track": return track();
-    case "share": return share();
     case "messages": return messages();
     case "call": return call();
     case "visit": return visit();
