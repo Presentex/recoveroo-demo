@@ -11,6 +11,10 @@
         var at = path.indexOf(marker);
         var base = at >= 0 ? path.slice(0, at + marker.length) : path.replace(/[^/]*$/, "");
         if (!base.endsWith("/")) base += "/";
+        if (path.indexOf("/old-files/") !== -1) {
+          location.replace(base + "old-files/prototype-before-nov21/" + (location.hash || ""));
+          return;
+        }
         location.replace(base + (location.hash || "#/welcome"));
       })();
     </script>
