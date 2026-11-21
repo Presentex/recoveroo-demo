@@ -21,7 +21,21 @@ const PATHS = {
 };
 
 export function icon(name) {
-  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PATHS[name] || ""}</svg>`;
+  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${PATHS[name] || ""}</svg>`;
+}
+
+export function ring(percent, color, label) {
+  const p = Math.max(0, Math.min(100, Number(percent) || 0));
+  const radius = 30;
+  const circ = 2 * Math.PI * radius;
+  const dash = (p / 100) * circ;
+  return `<div class="ring" role="img" aria-label="${esc(label)}">
+    <svg viewBox="0 0 76 76" aria-hidden="true">
+      <circle cx="38" cy="38" r="${radius}" class="ring-track"></circle>
+      <circle cx="38" cy="38" r="${radius}" class="ring-value" stroke="${color}" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"></circle>
+    </svg>
+    <strong>${esc(label)}</strong>
+  </div>`;
 }
 
 export function btn(label, extra, variant = "primary") {
@@ -47,7 +61,7 @@ export function choice(label, extra, pressed) {
 export function figure(motion, playing) {
   return `<div class="stage-video ${playing ? "is-playing" : ""}" data-motion="${esc(motion)}">
     <svg viewBox="0 0 220 140" aria-hidden="true">
-      <rect x="8" y="8" width="204" height="124" rx="16" class="vid-bg"/>
+      <rect x="8" y="8" width="204" height="124" rx="18" class="vid-bg"/>
       <circle cx="86" cy="36" r="11" class="fig"/>
       <path d="M86 47 v28" class="fig"/>
       <path d="M86 56 l-22 18" class="fig"/>

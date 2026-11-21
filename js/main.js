@@ -121,8 +121,9 @@ function tools(route, clinic) {
 function patientNav(active) {
   const items = [
     ["/today", "home", L("Today", "Hoy"), "today"],
-    ["/move", "move", L("Move", "Mover"), "move"],
+    ["/move", "move", L("Exercises", "Ejercicios"), "move"],
     ["/track", "chart", L("Progress", "Avance"), "track"],
+    ["/messages", "message", L("Care Team", "Equipo"), "care"],
     ["/more", "more", L("More", "Más"), "more"],
   ];
   return `<nav class="nav" aria-label="${L("Patient", "Paciente")}">${items.map(([href, name, label, id]) => `<button type="button" data-href="${href}" ${active === id ? 'aria-current="page"' : ""}>${icon(name)}<span>${label}</span></button>`).join("")}</nav>`;

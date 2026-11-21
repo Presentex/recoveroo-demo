@@ -6,7 +6,7 @@ import {
   L, TODAY, bendWord, dayCount, esc, expectedBend, isoShift,
   levelLabel, phaseLine, phaseOf, phoneLevel, sideLine, state, trackNoun, weekdayLabel,
 } from "./store.js";
-import { backLink, btn, choice, figure, h, icon } from "./ui.js";
+import { backLink, btn, choice, figure, h, icon, ring } from "./ui.js";
 
 function num(n) {
   return Number(n || 0).toLocaleString(state.lang === "es" ? "es-MX" : "en-US");
@@ -156,25 +156,25 @@ function welcome() {
     "Recoveroo. Recuperación en casa con su teléfono. Un fisioterapeuta y asistentes revisan su avance y lo contactan cuando algo no va bien. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
   );
   return view(`
-    <section class="hero">
-      <img src="./favicon.svg" width="88" height="88" alt="Recoveroo">
+    <section class="hero-card hero-coral bleed">
+      <img class="mark" src="./favicon.svg" width="44" height="44" alt="">
       <p class="kicker">Recoveroo</p>
       <h1>${L("Healing at home, with a person watching.", "Recuperarse en casa, con alguien pendiente.")}</h1>
-      <p class="lede">${L(
-        "Hip, knee, and shoulder replacement, plus a plan for muscle and joint pain without surgery. You only need your phone.",
-        "Reemplazo de cadera, rodilla y hombro, y también un plan para dolor muscular y articular sin cirugía. Solo necesita su teléfono.",
-      )}</p>
-      <div class="stack">
-        ${btn(L("Open Maria's phone", "Abrir el teléfono de Maria"), 'data-action="open-maria"')}
-        ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "coral")}
-        ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "secondary")}
-        ${btn(L("Set up someone new", "Preparar a otra persona"), 'data-href="/setup/hello"', "secondary")}
-      </div>
-      <p class="fine">${L(
-        "Fictional sample. Not a real clinic and not medical advice. The people on this phone are made up.",
-        "Muestra ficticia. No es una clínica real ni un consejo médico. Las personas de este teléfono son inventadas.",
+      <p>${L(
+        "Hip, knee, and shoulder replacement, plus muscle and joint pain without surgery. You only need your phone.",
+        "Reemplazo de cadera, rodilla y hombro, y dolor muscular y articular sin cirugía. Solo necesita su teléfono.",
       )}</p>
     </section>
+    <div class="stack">
+      ${btn(L("Open Maria's phone", "Abrir el teléfono de Maria"), 'data-action="open-maria"')}
+      ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
+      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "secondary")}
+      ${btn(L("Set up someone new", "Preparar a otra persona"), 'data-href="/setup/hello"', "secondary")}
+    </div>
+    <p class="fine">${L(
+      "Fictional sample. Not a real clinic and not medical advice. The people on this phone are made up.",
+      "Muestra ficticia. No es una clínica real ni un consejo médico. Las personas de este teléfono son inventadas.",
+    )}</p>
   `, speak, { nav: "none" });
 }
 
@@ -349,23 +349,34 @@ function today() {
     { n: 3, href: `/learn/${tip.id}`, title: L("Today's tip", "Consejo de hoy"), detail: t(tip.title), done: tipDone(), spot: "tip" },
   ];
   const level = phoneLevel(p, state.metrics);
+  const doneCount = tasks.filter((item) => item.done).length;
+  const tones = ["tone-coral", "tone-teal", "tone-navy"];
   const speak = `${hello}, ${p.patientName}. ${phaseLine(p)}. ${statusSentence()} ${L("Three jobs today: exercises, check-in, and one tip.", "Tres tareas hoy: ejercicios, registro y un consejo.")}`;
   return view(`
     ${helperBanner()}
-    ${h(phaseLine(p), `${hello}, ${esc(p.patientName.split(" ")[0])}.`, statusSentence())}
-    <p class="status status-${level}">${levelLabel(level)}</p>
-    <div class="stack top-gap">
-      ${tasks.map((item) => `<button type="button" class="task ${item.done ? "is-done" : ""}" data-href="${item.href}" data-spot="${item.spot}">
-        <span class="n">${item.done ? icon("check") : item.n}</span>
+    <section class="hero-card hero-navy hero-split bleed">
+      <div class="hero-copy">
+        <p class="kicker">${phaseLine(p)}</p>
+        <h1>${hello}, ${esc(p.patientName.split(" ")[0])}.</h1>
+        <p class="pill pill-${level}">${levelLabel(level)}</p>
+      </div>
+      ${ring(Math.round((doneCount / tasks.length) * 100), "#F07862", `${doneCount}/3`)}
+    </section>
+    <p class="lede">${statusSentence()}</p>
+    <div class="group">
+      ${tasks.map((item, index) => `<button type="button" class="task ${item.done ? "is-done" : ""}" data-href="${item.href}" data-spot="${item.spot}">
+        <span class="n ${tones[index]}">${item.done ? icon("check") : item.n}</span>
         <span><strong>${item.title}</strong><em>${esc(item.detail)}</em></span>
       </button>`).join("")}
     </div>
-    <button type="button" class="info-row" data-href="/activity">
-      ${icon("steps")}<span><strong>${num(state.metrics.stepsToday)} ${L("steps today", "pasos hoy")}</strong><em>${L("Counted by this phone", "Contados por este teléfono")}</em></span>
-    </button>
-    <button type="button" class="info-row" data-href="/reminders">
-      ${icon("calendar")}<span><strong>${L("Tue, Nov 24 · 2:00 PM", "mar 24 nov · 2:00 p. m.")}</strong><em>${L("Video visit with Sarah Chen, PT", "Videollamada con Sarah Chen, PT")}</em></span>
-    </button>
+    <div class="group">
+      <button type="button" class="info-row" data-href="/activity">
+        <span class="n tone-teal">${icon("steps")}</span><span><strong>${num(state.metrics.stepsToday)} ${L("steps today", "pasos hoy")}</strong><em>${L("Counted by this phone", "Contados por este teléfono")}</em></span>
+      </button>
+      <button type="button" class="info-row" data-href="/reminders">
+        <span class="n tone-amber">${icon("calendar")}</span><span><strong>${L("Tue, Nov 24 · 2:00 PM", "mar 24 nov · 2:00 p. m.")}</strong><em>${L("Video visit with Sarah Chen, PT", "Videollamada con Sarah Chen, PT")}</em></span>
+      </button>
+    </div>
     ${!state.metrics.questions ? `<button type="button" class="text-link" data-href="/questions">${L("This week's 5 questions are ready", "Las 5 preguntas de esta semana están listas")}</button>` : ""}
     ${phaseOf(p) === "preop" ? prepList() : ""}
   `, speak, { active: "today", footer: btn(task.label, `data-href="${task.href}"`) });
@@ -388,20 +399,20 @@ function move() {
   const list = listExercises();
   const speak = L("Move. Today's exercises, your step count, and a bend check with the phone camera guide.", "Moverse. Los ejercicios de hoy, los pasos y una revisión de la flexión con la guía de la cámara.");
   return view(`
-    ${h(L("Move", "Moverse"), L("Today's movement", "El movimiento de hoy"), L("One list. You can rest between moves.", "Una lista. Puede descansar entre ejercicios."))}
-    <div class="stack">
+    ${h(L("Exercises", "Ejercicios"), L("Today's exercises", "Ejercicios de hoy"), L("One list. Rest between moves.", "Una lista. Descanse entre ejercicios."))}
+    <div class="group">
       ${list.map((item) => {
         const st = exState(item.id);
         const note = st.done
           ? L(`Done · ${feedbackWord(st.feedback)}`, `Hecho · ${feedbackWord(st.feedback)}`)
           : t(item.why);
         return `<button type="button" class="task ${st.done ? "is-done" : ""}" data-href="/exercise/${item.id}">
-          <span class="n">${st.done ? icon("check") : icon("move")}</span>
+          <span class="n tone-coral">${st.done ? icon("check") : icon("move")}</span>
           <span><strong>${t(item.name)}</strong><em>${esc(note)}</em></span>
         </button>`;
       }).join("")}
-      <button type="button" class="task" data-href="/activity"><span class="n">${icon("steps")}</span><span><strong>${L("Steps", "Pasos")}</strong><em>${num(state.metrics.stepsToday)} ${L("today, from this phone", "hoy, de este teléfono")}</em></span></button>
-      <button type="button" class="task" data-href="/bend"><span class="n">${icon("camera")}</span><span><strong>${L("Check your bend", "Revise su flexión")}</strong><em>${L("Sample camera guide", "Guía de cámara de muestra")}</em></span></button>
+      <button type="button" class="task" data-href="/activity"><span class="n tone-teal">${icon("steps")}</span><span><strong>${L("Steps", "Pasos")}</strong><em>${num(state.metrics.stepsToday)} ${L("today, from this phone", "hoy, de este teléfono")}</em></span></button>
+      <button type="button" class="task" data-href="/bend"><span class="n tone-navy">${icon("camera")}</span><span><strong>${L("Check your bend", "Revise su flexión")}</strong><em>${L("Sample camera guide", "Guía de cámara de muestra")}</em></span></button>
     </div>
   `, speak, {
     active: "move",
@@ -785,14 +796,30 @@ function track() {
     : `<h2>${L(`Your ${bendWord(p.track)}`, `Su ${bendWord(p.track)}`)}</h2>
       ${expSeries.length && bends.length ? dualChart(bends, expSeries) : chart(bends, 40, 140, "#13294B")}
       ${expSeries.length ? `<p class="fine">${L(`The sample path for the latest point is about ${expSeries.at(-1)} degrees. Your latest saved bend is ${bends.at(-1) || "--"} degrees.`, `El camino de muestra del último punto es de unos ${expSeries.at(-1)} grados. Su última flexión guardada es de ${bends.at(-1) || "--"} grados.`)}</p>` : ""}`;
+  const latestBend = bends.at(-1);
+  const bendGoal = expSeries.at(-1) || latestBend || 100;
+  const bendPct = latestBend ? Math.min(100, Math.round((latestBend / bendGoal) * 100)) : 0;
+  const stepPct = Math.min(100, Math.round((state.metrics.stepsToday / 2000) * 100));
+  const earned = MILESTONES.filter((item) => state.metrics.milestones?.[item.id]).length;
   return view(`
-    ${h(weekdayLabel(), L("Your progress", "Su avance"), statusSentence())}
-    <p class="status status-${level}">${levelLabel(level)}</p>
-    <section class="block">${curve}</section>
-    <h2>${L("Badges", "Insignias")}</h2>
+    <section class="hero-card hero-navy bleed">
+      <div class="hero-copy">
+        <p class="kicker">${weekdayLabel()}</p>
+        <h1>${L("Your progress", "Su avance")}</h1>
+        <p class="pill pill-${level}">${levelLabel(level)}</p>
+      </div>
+      <div class="ring-row">
+        ${ring(p.track === "pain" ? 70 : bendPct, "#F07862", p.track === "pain" ? L("Pain", "Dolor") : `${latestBend || "--"}°`)}
+        ${ring(stepPct, "#5EEAD4", num(state.metrics.stepsToday))}
+        ${ring(Math.round((earned / MILESTONES.length) * 100), "#FFB020", `${earned}/${MILESTONES.length}`)}
+      </div>
+    </section>
+    <p class="lede">${statusSentence()}</p>
+    <section class="block card">${curve}</section>
+    <h2>${L("Milestones", "Logros")}</h2>
     <div class="badges">${MILESTONES.map((item) => {
       const on = Boolean(state.metrics.milestones?.[item.id]);
-      return `<article class="badge ${on ? "is-on" : ""}"><strong>${t(item.title)}</strong><em>${on ? t(item.detail) : L("Not yet", "Todavía no")}</em></article>`;
+      return `<article class="badge ${on ? "is-on" : ""}">${ring(on ? 100 : 8, on ? "#087A6A" : "#C7C7CC", "")}<span><strong>${t(item.title)}</strong><em>${on ? t(item.detail) : L("Not yet", "Todavía no")}</em></span></article>`;
     }).join("")}</div>
     ${state.metrics.questions ? `<p class="lede">${L("This week's question score", "Puntaje de las preguntas de esta semana")}: ${state.metrics.questions.score}</p>` : `<button type="button" class="text-link" data-href="/questions">${L("Answer this week's questions", "Responder las preguntas de esta semana")}</button>`}
   `, speak, { active: "track", footer: btn(L("Share this week with family", "Compartir la semana con la familia"), 'data-href="/share"', "coral") });
@@ -833,7 +860,11 @@ function messages() {
     "Mensajes con Sarah Chen, fisioterapeuta. Jenna Ruiz también puede responder. Un toque llama a Sarah. Esta muestra guarda los mensajes solo en el teléfono.",
   );
   return view(`
-    ${h(L("Messages", "Mensajes"), TEAM.pt.name, t(TEAM.pt.role) + L(". Jenna Ruiz, PTA, may reply too.", ". Jenna Ruiz, PTA, también puede responder."))}
+    <section class="hero-card hero-coral bleed">
+      <p class="kicker">${L("Care team", "Equipo")}</p>
+      <h1>${esc(TEAM.pt.name)}</h1>
+      <p>${t(TEAM.pt.role)}${L(". Jenna Ruiz, PTA, may reply too.", ". Jenna Ruiz, PTA, también puede responder.")}</p>
+    </section>
     <p class="lock">${icon("check")} ${L("Locked to your care team in a real version. This sample stays on the phone.", "En una versión real, iría solo a su equipo. Esta muestra se queda en el teléfono.")}</p>
     <div class="thread">
       ${lines.map((line) => `<article class="bubble ${line.from === "me" ? "mine" : ""}"><p>${esc(t(line.text))}</p><span>${esc(line.time)}</span></article>`).join("")}
@@ -849,7 +880,7 @@ function messages() {
       <textarea data-field="draftMessage" rows="3">${esc(state.metrics.draftMessage || "")}</textarea>
     </label>
   `, speak, {
-    active: "more",
+    active: "care",
     footer: `<div class="split">${btn(L("Send", "Enviar"), 'data-action="send"', "secondary")}${btn(L("Call my therapist", "Llamar a mi terapeuta"), 'data-href="/call/pt"')}</div>`,
   });
 }
@@ -1037,14 +1068,14 @@ function clinic() {
     ["ok", L("On track", "Va bien")],
   ];
   return view(`
-    <header class="page-head">
+    <section class="hero-card hero-navy bleed">
       <p class="kicker">${L("Care team", "Equipo de cuidado")}</p>
       <h1>${L("Who needs you", "Quién lo necesita")}</h1>
-      <p class="lede">${esc(TEAM.pt.name)} · ${weekdayLabel()}</p>
-    </header>
-    <p class="status ${needs ? "status-watch" : "status-ok"}">${needs ? L(`${needs} need a look before the others.`, `${needs} necesitan una mirada antes que el resto.`) : L("Everyone on the sample panel is on track.", "Todos en el panel de muestra van bien.")}</p>
+      <p>${esc(TEAM.pt.name)} · ${weekdayLabel()}</p>
+      <p class="pill ${needs ? "pill-watch" : "pill-ok"}">${needs ? L(`${needs} need a look`, `${needs} necesitan una mirada`) : L("Everyone is on track", "Todos van bien")}</p>
+    </section>
     <div class="filters">${filters.map(([id, label]) => `<button type="button" class="chip" aria-pressed="${filter === id}" data-action="filter" data-value="${id}">${label}</button>`).join("")}</div>
-    <div class="stack top-gap">
+    <div class="group">
       ${cards.map((card) => `<button type="button" class="patient level-${card.level}" data-href="/clinic/${card.id}">
         <span class="level-dot" aria-hidden="true"></span>
         <span>
@@ -1106,12 +1137,12 @@ function summary() {
       "Hoy no hay nada para el cirujano. Terapia está mirando el panel.",
     );
   return view(`
-    <header class="page-head">
+    <section class="hero-card hero-coral bleed">
       <p class="kicker">${L("For Dr. Anita Patel", "Para la Dra. Anita Patel")}</p>
       <h1>${surgeonCards.length ? L("A short list, already in motion.", "Una lista corta, ya en marcha.") : L("Nothing for you today.", "Hoy no hay nada para usted.")}</h1>
-      <p class="lede">${L("Prepared by Sarah Chen, PT. You do not need to enter data.", "Preparado por Sarah Chen, PT. No necesita ingresar datos.")}</p>
-    </header>
-    <p class="status ${surgeonCards.length ? "status-watch" : "status-ok"}">${speak}</p>
+      <p>${L("Prepared by Sarah Chen, PT. Nothing to enter.", "Preparado por Sarah Chen, PT. Nada que ingresar.")}</p>
+    </section>
+    <p class="lede">${speak}</p>
     <ul class="plain">
       <li>${L(`${cards.length} patients on this sample panel`, `${cards.length} pacientes en este panel de muestra`)}</li>
       <li>${L(`${ok} on track`, `${ok} van bien`)}</li>
