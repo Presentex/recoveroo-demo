@@ -533,6 +533,9 @@ function exercise() {
     </div>
     ${figure(item.id, playing)}
     ${hasVideo(item.id) ? "" : `<div class="stack">${btn(playing ? L("Pause video", "Pausar video") : L("Play video", "Ver video"), `data-action="play" data-id="${item.id}"`, "secondary")}</div>`}
+    ${ready ? `<section class="feel-block" data-feel>
+      ${feedback}
+    </section>` : `<p class="fine">${L("Stop if something feels sharp or wrong.", "Pare si algo se siente punzante o mal.")}</p>`}
     <h2>${L("Today's list", "Lista de hoy")}</h2>
     <div class="group">
       ${others.map((entry) => {
@@ -540,11 +543,13 @@ function exercise() {
         return `<button type="button" class="task ${done ? "is-done" : ""}" data-href="/exercise/${entry.id}"><span><strong>${t(entry.name)}</strong><em>${done ? L("Done", "Hecho") : t(entry.why)}</em></span></button>`;
       }).join("")}
     </div>
-    ${ready ? "" : `<p class="fine">${L("Stop if something feels sharp or wrong.", "Pare si algo se siente punzante o mal.")}</p>`}
   `, speak, {
     active: "move",
     footer: ready
-      ? feedback
+      ? `<button type="button" class="scroll-cue" data-scroll-cue>
+      <span aria-hidden="true">↓</span>
+      ${L("Scroll down to tell us how it felt", "Deslice hacia abajo para decir cómo se sintió")}
+    </button>`
       : btn(
         item.kind === "once" ? L("I finished", "Ya terminé") : L("Add one rep", "Contar una repetición"),
         `data-action="rep" data-id="${item.id}"`,

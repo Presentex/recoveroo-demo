@@ -3,7 +3,7 @@ import { celebrateCopy, renderRoute, routeOf } from "./screens.js";
 import {
   L, TODAY, earn, esc, freshMetrics, hydrate, loadSample, save, state,
 } from "./store.js";
-import { icon, syncVidToggle } from "./ui.js";
+import { btn, icon, syncVidToggle } from "./ui.js";
 
 const app = document.getElementById("app");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -204,6 +204,65 @@ function asideCopy(clinic) {
     : L("At-home recovery on the phone they already have. For hip, knee, shoulder, and other joint and muscle recovery.", "Recuperación en casa, en el teléfono que ya tienen. Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones.");
 }
 
+function wideWelcome() {
+  return window.matchMedia("(min-width: 1100px)").matches;
+}
+
+function landingBar() {
+  const links = [
+    ["#prototype", L("Prototype", "Prototipo")],
+    ["#for-patients", L("For patients", "Para pacientes")],
+    ["#for-practices", L("For practices", "Para clínicas")],
+  ];
+  return `
+    <button type="button" class="brand" data-scroll="#prototype">
+      <img src="./logo.svg" width="52" height="28" alt="">
+      <span>recoveroo</span>
+    </button>
+    <nav class="landing-nav" aria-label="${L("On this page", "En esta página")}">
+      ${links.map(([href, label]) => `<button type="button" data-scroll="${href}">${label}</button>`).join("")}
+      <button type="button" data-href="/clinic">${L("Care team", "Equipo")}</button>
+    </nav>
+    <p class="landing-pill">${L("Interactive demo, fictional data", "Demo interactiva, datos ficticios")}</p>
+  `;
+}
+
+function landingCopy() {
+  const cards = [
+    ["check", L("Daily check-in", "Registro diario"), L("Pain, swelling, and sleep in a few large, simple taps.", "Dolor, hinchazón y sueño en unos toques grandes y simples.")],
+    ["camera", L("Bend check", "Revisión de la flexión"), L("Camera first, with a drag fallback and PT review.", "Primero la cámara, con una opción de arrastrar y revisión del PT.")],
+    ["move", L("Guided exercises", "Ejercicios guiados"), L("Short videos for each step of the plan.", "Videos cortos para cada paso del plan.")],
+    ["message", L("Care team review", "Revisión del equipo"), L("The care team reaches out when something looks off.", "El equipo se comunica cuando algo no se ve bien.")],
+  ];
+  return `
+    <p class="eyebrow" id="prototype">${L("At-home orthopedic recovery", "Recuperación ortopédica en casa")}</p>
+    <h1>${L("Recovery support between visits, on the phone patients already have.", "Apoyo para la recuperación entre visitas, en el teléfono que los pacientes ya tienen.")}</h1>
+    <p class="landing-lede">${L(
+      "For hip, knee, shoulder, and other joint and muscle recovery. Patients follow a short daily plan, and a licensed PT and PTA team reviews their progress.",
+      "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Los pacientes siguen un plan diario corto, y un equipo de PT y PTA con licencia revisa su avance.",
+    )}</p>
+    <div class="feature-grid" id="for-patients">
+      ${cards.map(([name, title, body]) => `<article class="feature-card">
+        <span class="icon-tile">${icon(name)}</span>
+        <h2>${title}</h2>
+        <p>${body}</p>
+      </article>`).join("")}
+    </div>
+    <section class="practice-band" id="for-practices">
+      <p><strong>${L("Built for the practice:", "Hecho para la clínica:")}</strong> ${L(
+        "Better visibility between visits, and the practice gets an additional revenue stream.",
+        "Mejor visibilidad entre visitas, y la clínica obtiene un ingreso adicional.",
+      )}</p>
+    </section>
+    <div class="landing-actions">
+      ${btn(L("Try Maria's app", "Probar la app de Maria"), 'data-action="open-maria"')}
+      ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
+      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "desk")}
+      ${btn(L("Set up a new patient", "Preparar a un paciente nuevo"), 'data-href="/setup/hello"', "setup")}
+    </div>
+  `;
+}
+
 function render() {
   const route = routeOf();
   if (!state.profile || !state.metrics) loadSample();
@@ -216,7 +275,35 @@ function render() {
     }
   }
   if (state.metrics?.stepsToday >= 2000) earn("steps2k");
-  const view = renderRoute(route);
+  const landing = route.name === "welcome" && wideWelcome() && !state.demo;
+  document.body.classList.toggle("landing", landing);
+  const bar = document.getElementById("landing-bar");
+  const copy = document.getElementById("landing-copy");
+  let phoneRoute = route;
+  let view;
+  if (landing) {
+    if (state.profile?.source !== "sample") loadSample();
+    phoneRoute = { name: "today", id: "", rest: [], next: "", parts: ["today"] };
+    view = renderRoute(phoneRoute);
+    if (bar) {
+      bar.hidden = false;
+      bar.innerHTML = landingBar();
+    }
+    if (copy) {
+      copy.hidden = false;
+      copy.innerHTML = landingCopy();
+    }
+  } else {
+    if (bar) {
+      bar.hidden = true;
+      bar.innerHTML = "";
+    }
+    if (copy) {
+      copy.hidden = true;
+      copy.innerHTML = "";
+    }
+    view = renderRoute(route);
+  }
   state.speakText = view.speak || "";
   const clinic = view.nav === "clinic";
   document.body.classList.toggle("clinic", clinic);
@@ -227,7 +314,7 @@ function render() {
   const sameScreen = hash === lastHash && lastHash !== "";
   const keptScroll = sameScreen ? (document.getElementById("scroll")?.scrollTop || 0) : 0;
   app.innerHTML = `<div class="screen${clinic ? " is-desk" : ""}">
-    ${tools(route, clinic)}
+    ${tools(phoneRoute, clinic)}
     <div class="scroll" id="scroll">${view.html}</div>
     ${view.footer ? `<div class="dock-primary">${view.footer}</div>` : ""}
     ${state.demo ? demoDock() : view.nav === "patient" ? patientNav(view.active) : view.nav === "clinic" ? clinicNav(view.active) : ""}
@@ -262,6 +349,7 @@ function render() {
   });
   if (route.name !== "call") clearCall();
   else armCall();
+  armScrollCue();
   app.querySelectorAll("video.ex-clip").forEach((video) => {
     const sync = () => syncVidToggle(video);
     video.addEventListener("play", sync);
@@ -296,6 +384,37 @@ function commitBend(angle) {
   if (track === "knee" && value >= 90) earn("bend90");
   save();
   render();
+}
+
+function armScrollCue() {
+  const cue = app.querySelector("[data-scroll-cue]");
+  const feel = app.querySelector("[data-feel]");
+  const scroller = document.getElementById("scroll");
+  if (!cue || !feel || !scroller) return;
+  const update = () => {
+    const box = feel.getBoundingClientRect();
+    const root = scroller.getBoundingClientRect();
+    const seen = box.top >= root.top + 4 && box.bottom <= root.bottom - 4;
+    cue.hidden = seen;
+    const dock = cue.closest(".dock-primary");
+    if (dock) dock.hidden = seen;
+  };
+  cue.addEventListener("click", () => {
+    const top = feel.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8;
+    scroller.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+  });
+  scroller.addEventListener("scroll", update, { passive: true });
+  scroller.querySelectorAll("img, video").forEach((media) => {
+    media.addEventListener("load", update);
+    media.addEventListener("loadeddata", update);
+  });
+  if (window.ResizeObserver) {
+    const observer = new ResizeObserver(update);
+    observer.observe(scroller);
+    observer.observe(feel);
+  }
+  update();
+  requestAnimationFrame(update);
 }
 
 function armRomClip() {
@@ -789,8 +908,17 @@ function pushMessage(from, text) {
 }
 
 function onClick(event) {
-  const el = event.target.closest("button, [data-href]");
-  if (!el || !app.contains(el)) return;
+  const el = event.target.closest("button, [data-href], [data-scroll]");
+  if (!el || !document.querySelector(".page")?.contains(el)) return;
+  if (el.dataset.scroll) {
+    const target = document.querySelector(el.dataset.scroll);
+    target?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    document.querySelectorAll(".is-target").forEach((node) => node.classList.remove("is-target"));
+    target?.classList.add("is-target");
+    el.closest("nav")?.querySelectorAll("button").forEach((button) => button.removeAttribute("aria-current"));
+    if (el.closest(".landing-nav")) el.setAttribute("aria-current", "true");
+    return;
+  }
   if (el.dataset.action) {
     actions[el.dataset.action]?.(el);
     return;
@@ -920,7 +1048,10 @@ function armWalk() {
 }
 
 hydrate();
-app.addEventListener("click", onClick);
+document.addEventListener("click", onClick);
+window.matchMedia("(min-width: 1100px)").addEventListener("change", () => {
+  if (routeOf().name === "welcome") render();
+});
 app.addEventListener("input", onInput);
 app.addEventListener("change", onInput);
 window.addEventListener("hashchange", render);
