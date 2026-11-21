@@ -350,59 +350,91 @@ function personRow(person, lead) {
   </article>`;
 }
 
+function phaseTitle(profile) {
+  const phase = phaseOf(profile);
+  const day = Math.max(0, dayCount(profile));
+  if (phase === "preop") return phaseLine(profile);
+  if (phase === "pain") return phaseLine(profile);
+  if (day < 14) return L("Phase 1: Early healing", "Fase 1: Sanar");
+  if (day < 42) return L("Phase 2: Building motion", "Fase 2: Ganar movimiento");
+  return L("Phase 3: Getting stronger", "Fase 3: Más fuerza");
+}
+
 function today() {
   const p = state.profile;
   const tip = articleById(dailyTipId(p));
   const prog = exerciseProgress();
-  const task = nextTask();
   const hour = new Date().getHours();
-  const hello = hour < 12 ? L("Good morning", "Buenos días") : hour < 18 ? L("Good afternoon", "Buenas tardes") : L("Good evening", "Buenas noches");
+  const hello = p.source === "sample"
+    ? L("Good morning", "Buenos días")
+    : hour < 12 ? L("Good morning", "Buenos días") : hour < 18 ? L("Good afternoon", "Buenas tardes") : L("Good evening", "Buenas noches");
   const phase = phaseOf(p);
-  const preop = phase === "preop";
+  const day = Math.max(0, dayCount(p));
   const daysOut = Math.max(0, -dayCount(p));
-  const now = [];
+  const bend = state.metrics.rom?.angle || (state.metrics.history.bend || []).at(-1) || 95;
+  const pain = state.metrics.checkin?.pain ?? (state.metrics.history.pain || []).at(-1) ?? 3;
+  const [, joint] = trackNoun(p);
+  const ringPct = phase === "preop" ? 100 : Math.min(100, Math.round((day / 90) * 100));
+  const ringLabel = phase === "preop" ? String(daysOut) : String(day);
+  const tasks = [];
   if (phoneLevel(p, state.metrics) === "high") {
-    now.push({ href: "/alert", title: L("Warning sign", "Señal de alerta"), detail: L("See what to do now", "Ver qué hacer ahora"), tone: "tone-blue" });
-  } else {
-    if (preop && !prepDone()) {
-      const nextPrep = prepItems().find(([id]) => !state.metrics.prep?.[id]);
-      now.push({ href: "/prep", title: L("Getting ready", "Preparación"), detail: nextPrep[1], tone: "tone-navy" });
-    }
-    if (!exercisesDone()) {
-      now.push({ href: "/move", title: L("Exercises", "Ejercicios"), detail: L(`${prog.done} of ${prog.total} done`, `${prog.done} de ${prog.total} hechos`), tone: "tone-blue" });
-    }
-    if (now.length < 2 && !checkinDone()) {
-      now.push({ href: "/checkin/pain", title: L("Check-in", "Registro"), detail: L("Pain, swelling, and the wound", "Dolor, hinchazón y la herida"), tone: "tone-teal" });
-    }
-    if (now.length < 2 && !tipDone()) {
-      now.push({ href: `/learn/${tip.id}`, title: L("Today's tip", "Consejo de hoy"), detail: t(tip.title), tone: "tone-navy" });
-    }
-    if (!now.length) {
-      now.push({ href: "/track", title: L("You are done for today", "Hoy ya terminó"), detail: L("See your progress", "Ver su avance"), tone: "tone-teal" });
-    }
+    tasks.push({ href: "/alert", title: L("Warning sign", "Señal de alerta"), detail: L("See what to do now", "Ver qué hacer ahora"), start: true });
   }
-  const ringLabel = preop ? String(daysOut) : `${prog.done}/${prog.total}`;
-  const ringPct = preop ? 100 : (prog.total ? Math.round((prog.done / prog.total) * 100) : 0);
-  const level = phoneLevel(p, state.metrics);
-  const speak = `${hello}, ${p.patientName}. ${phaseLine(p)}. ${statusSentence()} ${now.map((item) => `${item.title}. ${item.detail}`).join(" ")}`;
+  if (phase === "preop" && !prepDone()) {
+    tasks.push({ href: "/prep", title: L("Getting ready", "Preparación"), detail: L(`${daysOut} days to surgery`, `${daysOut} días para la cirugía`), start: !tasks.length });
+  }
+  tasks.push({
+    href: "/checkin",
+    title: L("2-minute check-in", "Registro de 2 minutos"),
+    detail: checkinDone() ? L("Done for today", "Hecho por hoy") : L("Pain, swelling, sleep, and medicines", "Dolor, hinchazón, sueño y medicinas"),
+    start: !checkinDone() && !tasks.some((item) => item.start),
+  });
+  tasks.push({
+    href: "/move",
+    title: L("Exercises", "Ejercicios"),
+    detail: L(`${prog.done} of ${prog.total} done`, `${prog.done} de ${prog.total} hechos`),
+  });
+  tasks.push({
+    href: "/bend",
+    title: phase === "pain" ? L("Comfort check", "Revisión de comodidad") : L(`${joint} bend measurement`, `Medición de flexión, ${joint}`),
+    detail: bend ? L(`${bend} degrees last time`, `${bend} grados la vez pasada`) : L("Side view with the phone", "Vista de lado con el teléfono"),
+  });
+  if (!tipDone()) {
+    tasks.push({ href: `/learn/${tip.id}`, title: L("Today's lesson", "Lección de hoy"), detail: t(tip.title) });
+  }
+  const first = tasks.find((item) => item.start) || tasks[0];
+  const speak = `${hello}, ${p.patientName}. ${phaseTitle(p)}. ${joint} bend ${bend} degrees. ${num(state.metrics.stepsToday)} steps. Pain ${pain} out of 10. ${tasks.map((item) => item.title).join(". ")}. Next care team call Thursday at 2 PM with Jenna Ruiz.`;
   return view(`
     ${helperBanner()}
     <section class="hero-card hero-navy hero-split bleed">
       <div class="hero-copy">
-        <p class="kicker">${phaseLine(p)}</p>
-        <h1>${hello}, ${esc(p.patientName.split(" ")[0])}.</h1>
-        <p class="pill pill-${level}">${levelLabel(level)}</p>
+        <h1>${hello}, ${esc(p.patientName.split(" ")[0])}</h1>
+        <p>${phaseTitle(p)}</p>
       </div>
-      ${ring(ringPct, "#5EEAD4", ringLabel)}
+      <div class="day-ring">
+        ${ring(ringPct, "#F07862", ringLabel)}
+        <span>${phase === "preop" ? L("days to go", "días") : L("of 90 days", "de 90 días")}</span>
+      </div>
     </section>
-    <p class="section-label">${L("Do this now", "Haga esto ahora")}</p>
+    <div class="stats">
+      <article><strong>${bend}°</strong><span>${L(`${joint} bend`, `Flexión, ${joint}`)}</span></article>
+      <article><strong>${num(state.metrics.stepsToday)}</strong><span>${L("Steps", "Pasos")}</span></article>
+      <article><strong>${pain}/10</strong><span>${L("Pain", "Dolor")}</span></article>
+    </div>
+    <h2>${L("Today's tasks", "Tareas de hoy")}</h2>
     <div class="group">
-      ${now.map((item, index) => `<button type="button" class="task" data-href="${item.href}">
-        <span class="n ${item.tone}">${index + 1}</span>
+      ${tasks.map((item) => `<button type="button" class="task ${item.start ? "has-pill" : ""}" data-href="${item.href}" ${item.href === "/checkin" ? 'data-tour="checkin"' : ""} ${item.href === "/bend" ? 'data-tour="bend"' : ""}>
         <span><strong>${item.title}</strong><em>${esc(item.detail)}</em></span>
+        ${item.start ? `<span class="start-pill">${L("Start", "Empezar")}</span>` : ""}
       </button>`).join("")}
     </div>
-  `, speak, { active: "today", footer: btn(task.label, `data-href="${task.href}"`) });
+    <article class="call-card">
+      <p class="kicker">${L("Next care team call", "Próxima llamada del equipo")}</p>
+      <h2>${L("Thursday 2:00 PM", "Jueves 2:00 p. m.")}</h2>
+      <p>${L("with Jenna Ruiz, PTA", "con Jenna Ruiz, PTA")}</p>
+      ${btn(L("Add to calendar", "Agregar al calendario"), 'data-href="/reminders"', "secondary")}
+    </article>
+  `, speak, { active: "today", footer: btn(first.start ? L("Start check-in", "Empezar el registro") : L("Continue", "Seguir"), `data-href="${first.href}"`) });
 }
 
 function prepList() {
@@ -486,13 +518,28 @@ function exercise() {
       ${choice(L("Too hard", "Muy difícil"), `data-action="feedback" data-id="${item.id}" data-value="hard"`, st.feedback === "hard")}
     </div>
     <p class="fine">${L("Stop if pain is sharp. Soreness can be normal. Sharp pain is a reason to stop and tell your therapist.", "Pare si el dolor es punzante. Un dolor muscular puede ser normal. El dolor punzante es motivo para parar y avisarle a su terapeuta.")}</p>`;
+  const repsShown = item.kind === "once" ? (st.reps ? 1 : 0) : (st.reps || 0);
+  const repPct = item.kind === "once" ? (st.reps ? 100 : 8) : Math.min(100, Math.round((repsShown / Math.max(1, item.target)) * 100));
+  const others = listExercises().filter((entry) => entry.id !== item.id);
   return view(`
     ${backLink("/move", L("All exercises", "Todos los ejercicios"))}
     ${h(L("Exercise", "Ejercicio"), t(item.name), t(item.why))}
-    <p class="count" aria-live="polite"><strong>${item.kind === "once" ? (st.reps ? "1" : "0") : st.reps}</strong><span>${item.kind === "once" ? L("walk", "caminata") : L(`of ${item.target}`, `de ${item.target}`)}</span></p>
-    ${item.kind === "once" ? "" : `<p class="section-label">${L(`Set ${setNum} of ${sets}`, `Serie ${setNum} de ${sets}`)}</p>`}
+    <div class="rep-hero">
+      ${ring(repPct, "#F07862", String(repsShown))}
+      <div>
+        <p class="kicker">${item.kind === "once" ? L("One time today", "Una vez hoy") : L(`Set ${setNum} of ${sets}`, `Serie ${setNum} de ${sets}`)}</p>
+        <p class="measure">${repsShown} <small>${item.kind === "once" ? L("done", "hecho") : L(`of ${item.target}`, `de ${item.target}`)}</small></p>
+      </div>
+    </div>
     ${figure(item.id, playing)}
     ${hasVideo(item.id) ? "" : `<div class="stack">${btn(playing ? L("Pause video", "Pausar video") : L("Play video", "Ver video"), `data-action="play" data-id="${item.id}"`, "secondary")}</div>`}
+    <h2>${L("Today's list", "Lista de hoy")}</h2>
+    <div class="group">
+      ${others.map((entry) => {
+        const done = exState(entry.id).done;
+        return `<button type="button" class="task ${done ? "is-done" : ""}" data-href="/exercise/${entry.id}"><span><strong>${t(entry.name)}</strong><em>${done ? L("Done", "Hecho") : t(entry.why)}</em></span></button>`;
+      }).join("")}
+    </div>
     ${ready ? "" : `<p class="fine">${L("Stop if something feels sharp or wrong.", "Pare si algo se siente punzante o mal.")}</p>`}
   `, speak, {
     active: "move",
@@ -505,8 +552,56 @@ function exercise() {
   });
 }
 
+function seg(key, pairs, selected) {
+  return `<div class="seg" role="group">${pairs.map(([value, label]) => choice(label, `data-action="pick" data-key="${key}" data-value="${value}"`, selected === value)).join("")}</div>`;
+}
+
+function checkinSheet() {
+  const draft = state.metrics.draft || {};
+  const pain = draft.pain ?? 3;
+  const yesNo = (key) => seg(key, [["no", L("No", "No")], ["yes", L("Yes", "Sí")]], draft[key] === true ? "yes" : draft[key] === false ? "no" : undefined);
+  return view(`
+    <header class="page-head">
+      <p class="kicker">${L("Daily check-in", "Registro del día")}</p>
+      <h1>${L("How are you today?", "¿Cómo está hoy?")}</h1>
+    </header>
+    <label class="sheet-block">${L("Pain", "Dolor")}
+      <strong class="pain-read" data-pain-readout>${pain}</strong>
+      <input type="range" min="0" max="10" step="1" value="${pain}" data-field="painSlider" aria-label="${L("Pain from 0 to 10", "Dolor de 0 a 10")}">
+      <span class="range-ends"><em>0</em><em>10</em></span>
+    </label>
+    <div class="sheet-block">
+      <h2>${L("Swelling", "Hinchazón")}</h2>
+      ${seg("swell", [["none", L("None", "Ninguna")], ["little", L("Mild", "Leve")], ["some", L("Moderate", "Moderada")], ["alot", L("Severe", "Fuerte")]], draft.swell)}
+    </div>
+    <div class="sheet-block">
+      <h2>${L("Sleep", "Sueño")}</h2>
+      ${seg("sleep", [["under4", L("Under 4 hours", "Menos de 4 horas")], ["to6", L("4 to 6", "4 a 6")], ["to8", L("6 to 8", "6 a 8")], ["over8", L("8 or more", "8 o más")]], draft.sleep)}
+    </div>
+    <div class="sheet-block">
+      <h2>${L("Pain medicine", "Medicina para el dolor")}</h2>
+      ${seg("meds", [["yes", L("Yes", "Sí")], ["notyet", L("Not yet", "Todavía no")], ["none", L("I do not take any", "No tomo ninguna")]], draft.meds)}
+    </div>
+    <div class="sheet-block">
+      <h2>${L("Warning signs", "Señales de alerta")}</h2>
+      <div class="yn"><span>${L("Fever", "Fiebre")}</span>${yesNo("fever")}</div>
+      <div class="yn"><span>${L("Calf pain", "Dolor de pantorrilla")}</span>${yesNo("calf")}</div>
+      <div class="yn"><span>${L("Wound problem", "Problema de la herida")}</span>${yesNo("wound")}</div>
+      <div class="yn"><span>${L("Suddenly much worse", "Empeoró de golpe")}</span>${yesNo("worse")}</div>
+    </div>
+    <div class="stack">
+      ${btn(state.metrics.photo ? L("Sample photo added", "Foto de muestra agregada") : L("Add wound photo", "Agregar foto de la herida"), 'data-action="photo"', "secondary")}
+      <p class="fine">${L("This sample does not open your camera.", "Esta muestra no abre su cámara.")}</p>
+    </div>
+  `, L("Daily check-in. Pain, swelling, sleep, medicine, and warning signs. Then submit.", "Registro del día. Dolor, hinchazón, sueño, medicina y señales de alerta. Luego envíe."), {
+    active: "checkin",
+    footer: btn(L("Submit check-in", "Enviar registro"), 'data-action="checkin-sheet"'),
+  });
+}
+
 function checkin() {
-  const id = routeOf().id || "pain";
+  const id = routeOf().id || "";
+  if (!id) return checkinSheet();
   if (id === "done") return checkinDoneScreen();
   const flow = checkinFlow();
   if (!flow.includes(id)) return checkinDoneScreen();
@@ -753,17 +848,17 @@ function dualChart(actual, expected, days) {
   const callout = last && latest != null
     ? `<text x="${Math.max(left, last[0] - 92).toFixed(1)}" y="${Math.max(22, last[1] - 14).toFixed(1)}" fill="#13294B" font-size="16" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${latest} ${L("degrees", "grados")}</text>`
     : "";
-  const dots = coords(actual).map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === actual.length - 1 ? 6 : 4}" fill="#13294B"></circle>`).join("");
+  const dots = coords(actual).map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === actual.length - 1 ? 6 : 4}" fill="#F07862"></circle>`).join("");
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Your bend in degrees by day, and the sample path", "Su flexión en grados por día, y el camino de muestra"))}">
     <text x="2" y="16" fill="#3a3a3c" font-size="14" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${L("Degrees", "Grados")}</text>
     ${yLabels}
-    <path d="${path(expected)}" fill="none" stroke="#0071E3" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path>
-    <path d="${path(actual)}" fill="none" stroke="#13294B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>
+    <path d="${path(expected)}" fill="none" stroke="#13294B" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path>
+    <path d="${path(actual)}" fill="none" stroke="#F07862" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>
     ${dots}
     ${callout}
     ${xLabels}
   </svg>
-  <p class="legend"><i class="swatch navy"></i> ${L("Your bend", "Su flexión")} <i class="swatch blue"></i> ${L("Sample path", "Camino de muestra")}</p>
+  <p class="legend"><i class="swatch coral"></i> ${L("Your bend", "Su flexión")} <i class="swatch navy"></i> ${L("Sample path", "Camino de muestra")}</p>
   <p class="fine">${L("Numbers under the line are days after surgery.", "Los números bajo la línea son días después de la cirugía.")}</p>`;
 }
 
@@ -793,30 +888,39 @@ function bendDiagram(angle) {
     <rect width="320" height="280" rx="20" fill="#F4F7FB"/>
     <line x1="36" y1="${kneeY}" x2="${kneeX}" y2="${kneeY}" stroke="#13294B" stroke-width="20" stroke-linecap="round"/>
     <circle cx="${kneeX}" cy="${kneeY}" r="14" fill="#13294B"/>
-    <line data-shin x1="${kneeX}" y1="${kneeY}" x2="${x2}" y2="${y2}" stroke="#0071E3" stroke-width="20" stroke-linecap="round"/>
-    <circle data-foot cx="${x2}" cy="${y2}" r="14" fill="#0071E3"/>
+    <line data-shin x1="${kneeX}" y1="${kneeY}" x2="${x2}" y2="${y2}" stroke="#F07862" stroke-width="20" stroke-linecap="round"/>
+    <circle data-foot cx="${x2}" cy="${y2}" r="14" fill="#F07862"/>
   </svg>`;
+}
+
+function sheetReading() {
+  const track = state.profile.track;
+  if (track === "hip") return { angle: state.metrics.rom?.angle || 86, delta: 2, goal: 105 };
+  if (track === "shoulder") return { angle: state.metrics.rom?.angle || 96, delta: 4, goal: 120 };
+  if (track === "pain") return { angle: state.metrics.rom?.angle || 70, delta: 0, goal: null };
+  return { angle: state.metrics.rom?.angle || 95, delta: 3, goal: 110 };
+}
+
+function sparkline(values) {
+  if (!values?.length) return "";
+  const w = 280;
+  const h = 64;
+  const min = Math.min(...values) - 4;
+  const max = Math.max(...values) + 4;
+  const span = Math.max(1, max - min);
+  const coords = values.map((value, i) => {
+    const x = (i / Math.max(1, values.length - 1)) * (w - 8) + 4;
+    const y = h - 6 - ((value - min) / span) * (h - 16);
+    return [x, y];
+  });
+  const d = coords.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="#F07862" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
 }
 
 function bend() {
   const flow = state.metrics.rom?.flow || 0;
   const track = state.profile.track;
   const word = bendWord(track);
-  if (flow === 3) {
-    const angle = state.metrics.romLive ?? state.metrics.rom?.angle;
-    const day = Math.max(0, dayCount(state.profile));
-    const exp = expectedBend(day, track);
-    const detail = angle && exp
-      ? L(`About ${angle} degrees. The sample path for this week is near ${exp} degrees.`, `Cerca de ${angle} grados. El camino de muestra para esta semana está cerca de ${exp} grados.`)
-      : L("Saved on this phone.", "Guardado en este teléfono.");
-    return view(`
-      ${h(L("Saved", "Guardado"), track === "pain" ? L("Comfort check", "Revisión de comodidad") : `${angle ?? "--"}°`, detail)}
-      <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
-    `, `${detail} ${L("Your physical therapist reviews this reading.", "Su fisioterapeuta revisa esta lectura.")}`, {
-      active: "move",
-      footer: `<div class="stack">${btn(L("Check again", "Revisar de nuevo"), 'data-action="rom-flow" data-flow="1"')}${btn(L("Back", "Volver"), 'data-href="/move"', "secondary")}</div>`,
-    });
-  }
   if (flow === 2) {
     const angle = state.metrics.romAdjust ?? state.metrics.rom?.angle ?? 90;
     return view(`
@@ -830,11 +934,13 @@ function bend() {
       </div>
       <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
     `, L(`Adjust the lower leg. It is ${angle} degrees. Your physical therapist reviews this reading.`, `Ajuste la pierna de abajo. Son ${angle} grados. Su fisioterapeuta revisa esta lectura.`), {
-      nav: "none",
-      footer: btn(L("Save this reading", "Guardar esta lectura"), 'data-action="rom-keep"'),
+      active: "move",
+      footer: `<div class="stack">${btn(L("Save this reading", "Guardar esta lectura"), 'data-action="rom-keep"')}${btn(L("Back to the camera", "Volver a la cámara"), 'data-action="rom-flow" data-flow="0"', "secondary")}</div>`,
     });
   }
   const kneeClip = track === "knee";
+  const reading = sheetReading();
+  const bends = state.metrics.history.bend || [];
   const cameraView = kneeClip
     ? `<img class="rom-poster" src="assets/videos/rom-knee-bend.jpg" alt="" aria-hidden="true">
       <video class="rom-clip" src="assets/videos/rom-knee-bend.mp4" poster="assets/videos/rom-knee-bend.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>`
@@ -843,22 +949,34 @@ function bend() {
         <circle cx="78" cy="78" r="16" fill="#F4F7FB"/>
         <line x1="94" y1="86" x2="150" y2="100" stroke="#F4F7FB" stroke-width="16" stroke-linecap="round"/>
         <line x1="150" y1="100" x2="230" y2="78" stroke="#F4F7FB" stroke-width="14" stroke-linecap="round"/>
-        <line x1="230" y1="78" x2="250" y2="130" stroke="#5EEAD4" stroke-width="14" stroke-linecap="round"/>
+        <line x1="230" y1="78" x2="250" y2="130" stroke="#F07862" stroke-width="14" stroke-linecap="round"/>
       </svg>`;
+  const saved = state.metrics.romSaved
+    ? `<p class="saved-note">${L("Saved. Sarah Chen, PT, reviews this reading.", "Guardado. Sarah Chen, PT, revisa esta lectura.")}</p>`
+    : `<p class="fine">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>`;
   return view(`
-    <p class="kicker">${L("Step 1 of 2", "Paso 1 de 2")}</p>
-    ${h(L("Bend check", "Revisión de flexión"), L(`Prop the phone. Side view.`, `Apoye el teléfono. Vista de lado.`), L(`Sit in a firm chair. The phone looks at your ${word} from the side.`, `Siéntese en una silla firme. El teléfono mira su ${word} de lado.`))}
+    <p class="kicker">${L("Knee bend", "Flexión de rodilla")}</p>
+    <h1>${L("Prop the phone. Side view.", "Apoye el teléfono. Vista de lado.")}</h1>
+    <p class="lede">${L(`Sit in a firm chair. The phone looks at your ${word} from the side. This clip stands in for the camera.`, `Siéntese en una silla firme. El teléfono mira su ${word} de lado. Este video representa la cámara.`)}</p>
     <div class="finder-frame camera-sim${kneeClip ? " has-clip" : ""}">
       ${cameraView}
-      <p class="live-deg on-dark" aria-live="polite"><span data-live-angle>36</span><small>${L("degrees", "grados")}</small></p>
     </div>
-    <p class="fine">${kneeClip
-      ? L("This sample clip stands in for the camera. It does not turn on your camera. The number is the reading you can keep.", "Este video de muestra representa la cámara. No enciende su cámara. El número es la lectura que puede guardar.")
-      : L("This sample does not turn on your camera. The number stands in for a live reading.", "Esta muestra no enciende su cámara. El número representa una lectura en vivo.")}</p>
-    <p class="lede">${L("Sarah Chen, PT, reviews this reading.", "Sarah Chen, PT, revisa esta lectura.")}</p>
-  `, L("Step 1. Prop the phone for a side view. A large degree number shows the bend. Your physical therapist reviews it. You can adjust it yourself if the read is not clear.", "Paso 1. Apoye el teléfono para una vista de lado. Un número grande muestra la flexión. Su fisioterapeuta la revisa. Puede ajustarla usted si la lectura no es clara."), {
-    nav: "none",
-    footer: `<div class="stack">${btn(L("Use this reading", "Usar esta lectura"), 'data-action="rom-use"')}${btn(L("Adjust it yourself", "Ajústelo usted"), 'data-action="rom-flow" data-flow="2"', "secondary")}</div>`,
+    <section class="result-sheet">
+      <p class="kicker">${L("Today's measurement", "Medición de hoy")}</p>
+      <p class="measure">${reading.angle} <small>${L("degrees", "grados")}</small></p>
+      <p class="delta">${reading.delta > 0 ? L(`+${reading.delta} this week`, `+${reading.delta} esta semana`) : L("Same as last week", "Igual que la semana pasada")}</p>
+      ${reading.goal ? `<p>${L(`Goal ${reading.goal} degrees`, `Meta ${reading.goal} grados`)}</p>` : ""}
+      <p class="section-label">${L("Last readings", "Lecturas anteriores")}</p>
+      ${sparkline(bends)}
+      ${saved}
+      <div class="split sheet-actions">
+        ${btn(L("Retake", "Repetir"), 'data-action="rom-retake" data-tour="retake"', "secondary")}
+        ${btn(L("Save measurement", "Guardar medición"), 'data-action="rom-save" data-tour="save"')}
+      </div>
+      ${btn(L("Adjust it yourself", "Ajústelo usted"), 'data-action="rom-flow" data-flow="2" data-tour="adjust"', "secondary")}
+    </section>
+  `, L(`Knee bend camera. Today's measurement is ${reading.angle} degrees. You can retake, save, or adjust it yourself. Your physical therapist reviews the reading.`, `Cámara de flexión. La medición de hoy es ${reading.angle} grados. Puede repetir, guardar, o ajustarla usted. Su fisioterapeuta revisa la lectura.`), {
+    active: "move",
   });
 }
 
@@ -866,39 +984,54 @@ function bendArt() {
   return bendGuide().replace(">Phone<", `>${L("Phone", "Teléfono")}<`);
 }
 
+function sliceSpan(values) {
+  const span = state.metrics.chartSpan || "w";
+  const count = span === "w" ? 7 : span === "2w" ? 14 : values.length;
+  return values.slice(-count);
+}
+
+function stepBars(values) {
+  const max = Math.max(...values, 1);
+  return `<div class="bars" role="img" aria-label="${esc(L("Steps each day", "Pasos cada día"))}">${values.map((value) => `<span style="height:${Math.max(8, Math.round((value / max) * 100))}%"></span>`).join("")}</div>`;
+}
+
 function track() {
   const p = state.profile;
   const level = phoneLevel(p, state.metrics);
-  const bends = state.metrics.history.bend || [];
+  const span = state.metrics.chartSpan || "w";
+  const bends = sliceSpan(state.metrics.history.bend || []);
+  const pains = sliceSpan(state.metrics.history.pain || []);
+  const steps = sliceSpan(state.metrics.history.steps || []);
   const day = Math.max(0, dayCount(p));
   const expSeries = bends.map((_, i) => expectedBend(day - bends.length + i, p.track)).filter((n) => n != null);
   const speak = `${levelLabel(level)}. ${statusSentence()}`;
   const days = bends.map((_, i) => Math.max(0, day - (bends.length - 1) + i));
+  const delta = bends.length > 1 ? bends.at(-1) - bends[0] : 0;
+  const spans = [["w", L("W", "S")], ["2w", L("2W", "2S")], ["all", L("All", "Todo")]];
   const curve = p.track === "pain"
-    ? `<h2>${L("Pain this week", "Dolor esta semana")}</h2>${chart(state.metrics.history.pain, 0, 10, "#13294B")}<p class="fine">${L("Lower on the chart is better.", "Más abajo en la gráfica es mejor.")}</p>`
+    ? ""
     : `<h2>${L(`Your ${bendWord(p.track)}`, `Su ${bendWord(p.track)}`)}</h2>
-      ${expSeries.length && bends.length ? dualChart(bends, expSeries, days) : chart(bends, 0, 120, "#13294B")}
-      ${expSeries.length ? `<p class="fine">${L(`Latest reading: ${bends.at(-1)} degrees. The sample path near that day is about ${expSeries.at(-1)} degrees.`, `Última lectura: ${bends.at(-1)} grados. El camino de muestra cerca de ese día es de unos ${expSeries.at(-1)} grados.`)}</p>` : ""}`;
-  const latestBend = bends.at(-1);
-  const bendGoal = expSeries.at(-1) || latestBend || 100;
-  const bendPct = latestBend ? Math.min(100, Math.round((latestBend / bendGoal) * 100)) : 0;
-  const stepPct = Math.min(100, Math.round((state.metrics.stepsToday / 2000) * 100));
-  const earned = MILESTONES.filter((item) => state.metrics.milestones?.[item.id]).length;
+      <p class="delta">${delta >= 0 ? "+" : ""}${delta} ${L("since week 1", "desde la semana 1")}</p>
+      ${expSeries.length && bends.length ? dualChart(bends, expSeries, days) : chart(bends, 0, 120, "#F07862")}`;
   return view(`
-    <section class="hero-card hero-navy bleed">
-      <div class="hero-copy">
-        <p class="kicker">${weekdayLabel()}</p>
-        <h1>${L("Your progress", "Su avance")}</h1>
-        <p class="pill pill-${level}">${levelLabel(level)}</p>
-      </div>
-      <div class="ring-row">
-        ${ring(p.track === "pain" ? 70 : bendPct, "#8ECAFF", p.track === "pain" ? L("Pain", "Dolor") : `${latestBend || "--"}°`)}
-        ${ring(stepPct, "#5EEAD4", num(state.metrics.stepsToday))}
-        ${ring(Math.round((earned / MILESTONES.length) * 100), "#FFFFFF", `${earned}/${MILESTONES.length}`)}
-      </div>
-    </section>
+    <header class="page-head">
+      <p class="kicker">${weekdayLabel()}</p>
+      <h1>${L("My progress", "Mi avance")}</h1>
+      <p class="pill pill-${level}">${levelLabel(level)}</p>
+    </header>
     <p class="lede">${statusSentence()}</p>
+    <div class="seg span-seg">${spans.map(([id, label]) => `<button type="button" class="choice" aria-pressed="${span === id}" data-action="span" data-value="${id}">${label}</button>`).join("")}</div>
     <section class="block card">${curve}</section>
+    <section class="block card">
+      <h2>${L("Steps per day", "Pasos por día")}</h2>
+      ${steps.length ? stepBars(steps) : ""}
+      <p class="fine">${L(`${num(state.metrics.stepsToday)} steps today, from this phone.`, `${num(state.metrics.stepsToday)} pasos hoy, de este teléfono.`)}</p>
+    </section>
+    <section class="block card">
+      <h2>${L("Pain", "Dolor")}</h2>
+      ${chart(pains, 0, 10, "#13294B")}
+      <p class="fine">${L("Lower on the chart is better.", "Más abajo en la gráfica es mejor.")}</p>
+    </section>
     <h2>${L("Milestones", "Logros")}</h2>
     <div class="badges">${MILESTONES.map((item) => {
       const on = Boolean(state.metrics.milestones?.[item.id]);
@@ -915,11 +1048,15 @@ function messages() {
     "Mensajes con Sarah Chen, fisioterapeuta. Jenna Ruiz también puede responder. Un toque llama a Sarah. Esta muestra guarda los mensajes solo en el teléfono.",
   );
   return view(`
-    <section class="hero-card hero-blue bleed">
+    <header class="page-head">
       <p class="kicker">${L("Care team", "Equipo")}</p>
-      <h1>${esc(TEAM.pt.name)}</h1>
-      <p>${t(TEAM.pt.role)}${L(". Jenna Ruiz, PTA, may reply too.", ". Jenna Ruiz, PTA, también puede responder.")}</p>
-    </section>
+      <h1>${esc(TEAM.pta.name)}</h1>
+      <p class="lede">${t(TEAM.pta.role)}. ${esc(TEAM.pt.name)} ${L("leads your plan.", "dirige su plan.")}</p>
+    </header>
+    <article class="call-card">
+      <p>${L("Your care coordinator will call Thursday at 2:00 PM.", "Su coordinadora llamará el jueves a las 2:00 p. m.")}</p>
+      ${btn(L("Call my therapist", "Llamar a mi terapeuta"), 'data-href="/call/pt" data-tour="call"')}
+    </article>
     <p class="lock">${icon("check")} ${L("Locked to your care team in a real version. This sample stays on the phone.", "En una versión real, iría solo a su equipo. Esta muestra se queda en el teléfono.")}</p>
     <div class="thread">
       ${lines.map((line) => `<article class="bubble ${line.from === "me" ? "mine" : ""}"><p>${esc(t(line.text))}</p><span>${esc(line.time)}</span></article>`).join("")}
@@ -1115,42 +1252,122 @@ function allCards() {
   return cards.sort((a, b) => rank[a.level] - rank[b.level]);
 }
 
-function clinic() {
-  const filter = state.metrics.clinicFilter || "all";
-  const cards = allCards().filter((card) => filter === "all" || card.level === filter || (filter === "high" && card.level === "watch"));
-  const needs = allCards().filter((card) => card.level !== "ok").length;
+function surgeonOf(card) {
+  if (card.id === "elena" || card.id === "aisha") return "Dr. Omar Shah";
+  return "Dr. Anita Patel";
+}
+
+function procedureOf(card) {
+  const map = {
+    knee: L("Knee replacement", "Reemplazo de rodilla"),
+    hip: L("Hip replacement", "Reemplazo de cadera"),
+    shoulder: L("Shoulder replacement", "Reemplazo de hombro"),
+    pain: L("Joint pain, no surgery", "Dolor articular, sin cirugía"),
+  };
+  return map[card.track] || map.knee;
+}
+
+function dayNumber(card) {
+  const match = String(showDay(card)).match(/\d+/);
+  return match ? match[0] : "--";
+}
+
+function billingOf(card) {
+  if (card.level === "high") return L("Hold", "En espera");
+  if (card.level === "watch") return L("Review", "Revisar");
+  return L("Ready", "Listo");
+}
+
+function minutesOf(card) {
+  const steps = Number(String(card.steps).replace(/,/g, "")) || 0;
+  return String(Math.max(12, Math.round(steps / 18)));
+}
+
+function clinic(mode = "patients") {
+  const all = allCards();
+  const surgeon = state.metrics.surgeonFilter || "all";
+  const surgeons = ["all", "Dr. Anita Patel", "Dr. Omar Shah"];
+  let cards = all.filter((card) => surgeon === "all" || surgeonOf(card) === surgeon);
+  if (mode === "alerts") cards = cards.filter((card) => card.level !== "ok");
+  if (mode === "calls") cards = cards.filter((card) => card.level !== "ok");
+  const high = all.filter((card) => card.level === "high").length;
+  const watch = all.filter((card) => card.level === "watch").length;
+  const ready = all.filter((card) => billingOf(card) === L("Ready", "Listo")).length;
+  const titles = {
+    patients: L("Patients", "Pacientes"),
+    alerts: L("Alerts", "Alertas"),
+    calls: L("Calls", "Llamadas"),
+    billing: L("Billing", "Cobros"),
+    docs: L("Documentation", "Notas"),
+    settings: L("Settings", "Ajustes"),
+  };
   const speak = L(
-    `Care team desk for Sarah Chen. ${needs} people need a look. Warning signs are at the top. Open a name for the story, or open the surgeon summary.`,
-    `Escritorio de Sarah Chen. ${needs} personas necesitan una mirada. Las señales de alerta están arriba. Abra un nombre o el resumen del cirujano.`,
+    `Patients for Sarah Chen. ${all.length} active. ${high} high risk. ${watch} on the watch list.`,
+    `Pacientes de Sarah Chen. ${all.length} activos. ${high} de alto riesgo. ${watch} en observación.`,
   );
-  const filters = [
-    ["all", L("Everyone", "Todos")],
-    ["high", L("Needs a look", "Hay que revisar")],
-    ["ok", L("On track", "Va bien")],
-  ];
+  const stats = `<div class="desk-stats">
+    <article><strong>${all.length}</strong><span>${L("Active patients", "Pacientes activos")}</span></article>
+    <article><strong>${high}</strong><span>${L("High risk", "Alto riesgo")}</span></article>
+    <article><strong>${watch}</strong><span>${L("Watch list", "En observación")}</span></article>
+    <article><strong>${ready}</strong><span>${L("Billing ready", "Cobro listo")}</span></article>
+    <article><strong>${high + watch}</strong><span>${L("Calls due", "Llamadas pendientes")}</span></article>
+  </div>`;
+  const chips = `<div class="filters">${surgeons.map((name) => {
+    const label = name === "all" ? L("All surgeons", "Todos los cirujanos") : name;
+    return `<button type="button" class="chip" aria-pressed="${surgeon === name}" data-action="surgeon" data-value="${esc(name)}">${label}</button>`;
+  }).join("")}</div>`;
+  const table = `<div class="table-wrap"><table class="desk-table">
+    <thead><tr>
+      <th>${L("Patient", "Paciente")}</th>
+      <th>${L("Risk", "Riesgo")}</th>
+      <th>${L("Procedure", "Procedimiento")}</th>
+      <th>${L("Surgeon", "Cirujano")}</th>
+      <th>${L("Day", "Día")}</th>
+      <th>${L("Flag", "Aviso")}</th>
+      <th>${L("Data days", "Días con datos")}</th>
+      <th>${L("Minutes", "Minutos")}</th>
+      <th>${L("Last call", "Última llamada")}</th>
+      <th>${L("Billing", "Cobro")}</th>
+    </tr></thead>
+    <tbody>${cards.map((card, index) => {
+      const reason = typeof card.reason === "string" ? card.reason : t(card.reason);
+      const contact = card.live ? card.contact : t(card.contact);
+      const risk = card.level === "high" ? L("High", "Alto") : card.level === "watch" ? L("Watch", "Observar") : L("On track", "Va bien");
+      return `<tr data-href="/clinic/${card.id}" ${index === 0 ? 'data-tour="patient"' : ""}>
+        <td><strong>${esc(card.name)}</strong></td>
+        <td><span class="risk risk-${card.level}">${risk}</span></td>
+        <td>${procedureOf(card)}</td>
+        <td>${surgeonOf(card)}</td>
+        <td>${esc(dayNumber(card))}</td>
+        <td>${esc(reason)}</td>
+        <td>${esc(dayNumber(card))}</td>
+        <td>${minutesOf(card)}</td>
+        <td>${esc(contact)}</td>
+        <td>${billingOf(card)}</td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table></div>`;
+  let body = `${stats}${chips}<p class="fine">${L("Fictional patients. Not a real clinic.", "Pacientes ficticios. No es una clínica real.")}</p>${table}`;
+  if (mode === "billing") {
+    body = `${stats}<p class="lede">${L("Covered by most Medicare and Medicare Advantage plans. Your usual copay may apply.", "Cubierto por la mayoría de los planes de Medicare y Medicare Advantage. Puede aplicar su copago habitual.")}</p>${table}`;
+  }
+  if (mode === "docs") {
+    body = `<p class="lede">${L("Notes live on each patient. This desk does not keep a separate chart.", "Las notas viven en cada paciente. Este escritorio no guarda otro expediente.")}</p>${table}`;
+  }
+  if (mode === "settings") {
+    body = `<p class="lede">${L("The patient phone has read-aloud, text size, and Spanish in the header.", "El teléfono del paciente tiene lectura en voz alta, tamaño de texto y español en el encabezado.")}</p>
+      <div class="stack">${btn(L("Open Maria's phone", "Abrir el teléfono de Maria"), 'data-href="/today"')}</div>`;
+  }
   return view(`
-    <section class="hero-card hero-navy bleed">
-      <p class="kicker">${L("Care team", "Equipo de cuidado")}</p>
-      <h1>${L("Who needs you", "Quién lo necesita")}</h1>
-      <p>${esc(TEAM.pt.name)} · ${weekdayLabel()}</p>
-      <p class="pill ${needs ? "pill-watch" : "pill-ok"}">${needs ? L(`${needs} need a look`, `${needs} necesitan una mirada`) : L("Everyone is on track", "Todos van bien")}</p>
-    </section>
-    <div class="filters">${filters.map(([id, label]) => `<button type="button" class="chip" aria-pressed="${filter === id}" data-action="filter" data-value="${id}">${label}</button>`).join("")}</div>
-    <div class="group">
-      ${cards.map((card) => `<button type="button" class="patient level-${card.level}" data-href="/clinic/${card.id}">
-        <span class="level-dot" aria-hidden="true"></span>
-        <span>
-          <strong>${esc(card.name)}</strong>
-          <em>${esc(showDay(card))} · ${levelLabel(card.level)}</em>
-          <em>${esc(typeof card.reason === "string" ? card.reason : t(card.reason))}</em>
-        </span>
-      </button>`).join("")}
-    </div>
-  `, speak, {
-    nav: "clinic",
-    active: "patients",
-    footer: btn(L("Open surgeon summary", "Abrir el resumen del cirujano"), 'data-href="/summary"', "coral"),
-  });
+    <header class="desk-head">
+      <div>
+        <p class="kicker">${esc(TEAM.pt.name)}</p>
+        <h1>${titles[mode] || titles.patients}</h1>
+      </div>
+      <button type="button" class="btn btn-secondary desk-link" data-href="/summary">${L("Practice summary", "Resumen del consultorio")}</button>
+    </header>
+    ${body}
+  `, speak, { nav: "clinic", active: mode === "patients" ? "patients" : mode });
 }
 
 function clinicDetail() {
@@ -1164,6 +1381,11 @@ function clinicDetail() {
   return view(`
     ${backLink("/clinic", L("All patients", "Todos los pacientes"))}
     ${h(levelLabel(card.level), esc(card.name), esc(showDay(card)))}
+    <section class="block card">
+      <h2>${L("Summary", "Resumen")}</h2>
+      <p>${esc(story)}</p>
+      <p class="fine">${procedureOf(card)} · ${surgeonOf(card)} · ${billingOf(card)}</p>
+    </section>
     <p class="status status-${card.level}">${esc(reason)}</p>
     <ul class="plain">
       <li>${L("Pain", "Dolor")}: ${esc(card.pain)}</li>
@@ -1254,7 +1476,12 @@ export function renderRoute(route) {
     case "reminders": return reminders();
     case "prep": return prep();
     case "more": return more();
-    case "clinic": return route.id ? clinicDetail() : clinic();
+    case "clinic": {
+      const pages = ["alerts", "calls", "billing", "docs", "settings"];
+      if (!route.id) return clinic("patients");
+      if (pages.includes(route.id)) return clinic(route.id);
+      return clinicDetail();
+    }
     case "summary": return summary();
     default: return missing();
   }

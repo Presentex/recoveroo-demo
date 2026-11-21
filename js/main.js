@@ -99,7 +99,31 @@ function stepDemo(dir) {
   navigate(DEMO[next].href);
 }
 
+function deskNav(route) {
+  const id = route.id || "";
+  const items = [
+    ["/clinic", L("Patients", "Pacientes"), route.name === "clinic" && !["alerts", "calls", "billing", "docs", "settings"].includes(id)],
+    ["/clinic/alerts", L("Alerts", "Alertas"), id === "alerts"],
+    ["/clinic/calls", L("Calls", "Llamadas"), id === "calls"],
+    ["/clinic/billing", L("Billing", "Cobros"), id === "billing"],
+    ["/summary", L("Practice summary", "Resumen"), route.name === "summary"],
+    ["/clinic/docs", L("Documentation", "Notas"), id === "docs"],
+    ["/clinic/settings", L("Settings", "Ajustes"), id === "settings"],
+  ];
+  return `<aside class="desk-nav">
+    <button type="button" class="brand brand-on-navy" data-href="/clinic">
+      <img src="./logo.svg" width="28" height="16" alt="">
+      <span>recoveroo</span>
+    </button>
+    <nav aria-label="${L("Care team desk", "Escritorio del equipo")}">
+      ${items.map(([href, label, on]) => `<button type="button" data-href="${href}" ${on ? 'aria-current="page"' : ""}>${label}</button>`).join("")}
+    </nav>
+    <button type="button" class="desk-phone" data-href="/today">${L("Patient phone", "Teléfono")}</button>
+  </aside>`;
+}
+
 function tools(route, clinic) {
+  if (clinic) return deskNav(route);
   const home = route.name === "welcome" ? "/welcome" : clinic ? "/clinic" : "/today";
   const sizes = [18, 21, 24];
   const atMin = state.text === sizes[0];
@@ -129,13 +153,8 @@ function patientNav(active) {
   return `<nav class="nav" aria-label="${L("Patient", "Paciente")}">${items.map(([href, name, label, id]) => `<button type="button" data-href="${href}" ${active === id ? 'aria-current="page"' : ""}>${icon(name)}<span>${label}</span></button>`).join("")}</nav>`;
 }
 
-function clinicNav(active) {
-  const items = [
-    ["/clinic", "person", L("Patients", "Pacientes"), "patients"],
-    ["/summary", "chart", L("Surgeon", "Cirujano"), "summary"],
-    ["/today", "phone", L("Phone", "Teléfono"), "phone"],
-  ];
-  return `<nav class="nav" aria-label="${L("Care team", "Equipo")}">${items.map(([href, name, label, id]) => `<button type="button" data-href="${href}" ${active === id ? 'aria-current="page"' : ""}>${icon(name)}<span>${label}</span></button>`).join("")}</nav>`;
+function clinicNav() {
+  return "";
 }
 
 function demoDock() {
@@ -204,7 +223,7 @@ function render() {
   document.documentElement.lang = state.lang === "es" ? "es" : "en";
   document.documentElement.style.setProperty("--text", `${state.text}px`);
   asideCopy(clinic);
-  app.innerHTML = `<div class="screen">
+  app.innerHTML = `<div class="screen${clinic ? " is-desk" : ""}">
     ${tools(route, clinic)}
     <div class="scroll" id="scroll">${view.html}</div>
     ${view.footer ? `<div class="dock-primary">${view.footer}</div>` : ""}
@@ -250,6 +269,7 @@ function render() {
   armRomClip();
   armLiveAngle();
   armBendDrag();
+  armWalk();
 }
 
 function readField(name) {
@@ -594,13 +614,63 @@ const actions = {
   },
   "rom-flow"(el) {
     const flow = Number(el.dataset.flow);
-    if (flow === 2 && state.metrics.romAdjust == null) {
-      const live = Number(app.querySelector("[data-live-angle]")?.textContent);
-      state.metrics.romAdjust = live || state.metrics.romLive || state.metrics.rom?.angle || 90;
+    if (flow === 2) {
+      state.metrics.romAdjust = state.profile.track === "knee" ? (state.metrics.rom?.angle || 95) : (state.metrics.rom?.angle || 90);
     }
     state.metrics.rom = { ...(state.metrics.rom || {}), flow };
     save();
     render();
+  },
+  "rom-save"() {
+    const reading = state.profile.track === "knee" ? (state.metrics.rom?.angle || 95) : sampleBend(state.profile.track);
+    state.metrics.romLive = reading;
+    state.metrics.romAdjust = reading;
+    state.metrics.rom = { ...(state.metrics.rom || {}), angle: reading, date: TODAY, flow: 0 };
+    const history = state.metrics.history.bend || [];
+    if (history.at(-1) !== reading) state.metrics.history.bend = [...history, reading].slice(-14);
+    state.metrics.romSaved = true;
+    if (state.profile.track === "knee" && reading >= 90) earn("bend90");
+    save();
+    render();
+  },
+  "rom-retake"() {
+    state.metrics.romSaved = false;
+    save();
+    const note = app.querySelector(".saved-note");
+    if (note) note.remove();
+    const video = app.querySelector("video.rom-clip");
+    if (video) {
+      video.currentTime = 0;
+      const play = video.play();
+      if (play?.catch) play.catch(() => {});
+    }
+  },
+  span(el) {
+    state.metrics.chartSpan = el.dataset.value;
+    save();
+    render();
+  },
+  surgeon(el) {
+    state.metrics.surgeonFilter = el.dataset.value;
+    save();
+    render();
+  },
+  "checkin-sheet"() {
+    const draft = { ...(state.metrics.draft || {}) };
+    if (draft.pain === undefined) draft.pain = Number(app.querySelector("[data-field='painSlider']")?.value ?? 3);
+    state.metrics.draft = draft;
+    const needed = ["swell", "sleep", "meds", "fever", "calf", "wound", "worse"];
+    if (needed.some((key) => draft[key] === undefined)) {
+      toast(L("Please answer each row.", "Responda cada fila."));
+      return;
+    }
+    if (["fever", "calf", "wound", "worse"].some((key) => draft[key] === true)) {
+      state.metrics.checkin = { ...draft, date: TODAY, partial: true };
+      save();
+      navigate("/alert?next=/checkin/done");
+      return;
+    }
+    finishCheckin();
   },
   "rom-use"() {
     const live = Number(app.querySelector("[data-live-angle]")?.textContent);
@@ -734,12 +804,117 @@ function onInput(event) {
     state.setup[el.dataset.field] = el.value;
   } else if (el.dataset.field === "draftMessage") {
     state.metrics.draftMessage = el.value;
+  } else if (el.dataset.field === "painSlider") {
+    state.metrics.draft = state.metrics.draft || {};
+    state.metrics.draft.pain = Number(el.value);
+    const readout = app.querySelector("[data-pain-readout]");
+    if (readout) readout.textContent = el.value;
+    save();
+    return;
   } else if (el.dataset.field === "setupDate") {
     ensureSetup();
     state.setup.date = el.value;
     state.setup.when = el.value > TODAY ? "future" : "past";
   }
   save();
+}
+
+let tourRunning = false;
+
+function tourSleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function ensureTourChrome() {
+  let cursor = document.getElementById("tour-cursor");
+  let caption = document.getElementById("tour-caption");
+  if (!cursor) {
+    cursor = document.createElement("div");
+    cursor.id = "tour-cursor";
+    document.body.appendChild(cursor);
+  }
+  if (!caption) {
+    caption = document.createElement("p");
+    caption.id = "tour-caption";
+    document.body.appendChild(caption);
+  }
+  return { cursor, caption };
+}
+
+async function glide(selector) {
+  const el = document.querySelector(selector);
+  const { cursor } = ensureTourChrome();
+  if (!el) {
+    console.warn("tour missed", selector);
+    return false;
+  }
+  el.scrollIntoView({ block: "center", behavior: "smooth" });
+  await tourSleep(450);
+  const rect = el.getBoundingClientRect();
+  const x = rect.left + rect.width / 2 - 20;
+  const y = rect.top + rect.height / 2 - 20;
+  cursor.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  await tourSleep(800);
+  await tourSleep(1000);
+  cursor.classList.add("is-press");
+  await tourSleep(260);
+  el.click();
+  await tourSleep(280);
+  cursor.classList.remove("is-press");
+  return true;
+}
+
+async function runWalk() {
+  const { cursor, caption } = ensureTourChrome();
+  cursor.style.transform = "translate(70px, 140px)";
+  loadSample();
+  if (!location.hash.startsWith("#/today")) location.hash = "#/today?walk=1";
+  else render();
+  const say = async (text, ms) => {
+    caption.textContent = text;
+    await tourSleep(ms);
+  };
+  await say("Today", 2800);
+  caption.textContent = "Daily check-in";
+  await glide('[data-tour="checkin"]');
+  await say("Daily check-in", 3000);
+  caption.textContent = "Today";
+  await glide('nav.nav button[data-href="/today"]');
+  await say("Today", 1600);
+  caption.textContent = "Knee bend";
+  await glide('[data-tour="bend"]');
+  await say("Knee bend", 6000);
+  caption.textContent = "Adjust it yourself";
+  await glide('[data-tour="adjust"]');
+  await say("Adjust it yourself", 2200);
+  await glide('[data-action="rom-nudge"][data-dir="1"]');
+  await say("Adjust it yourself", 1800);
+  caption.textContent = "Exercises";
+  await glide('nav.nav button[data-href="/move"]');
+  await say("Exercises", 1600);
+  await glide('button[data-href="/exercise/quad-sets"]');
+  await say("Exercises", 4500);
+  caption.textContent = "Progress";
+  await glide('nav.nav button[data-href="/track"]');
+  await say("Progress", 3500);
+  caption.textContent = "Care team";
+  await glide('nav.nav button[data-href="/messages"]');
+  await say("Care team", 3500);
+  caption.textContent = "Patients";
+  location.hash = "#/clinic?walk=1";
+  await tourSleep(900);
+  await say("Patients", 3500);
+  caption.textContent = "Patient detail";
+  await glide('[data-tour="patient"]');
+  await say("Patient detail", 3500);
+  caption.remove();
+  cursor.remove();
+}
+
+function armWalk() {
+  if (tourRunning || !location.hash.includes("walk=1")) return;
+  tourRunning = true;
+  runWalk();
 }
 
 hydrate();
