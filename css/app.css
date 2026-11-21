@@ -156,13 +156,13 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   width: 100%;
   min-height: 52px;
   border-radius: 980px;
-  border: 0;
+  border: 2px solid #13294B;
   padding: 14px 18px;
   font-weight: 700;
   text-align: center;
 }
 .btn-primary, .btn-coral { background: var(--accent); color: var(--navy); }
-.btn-secondary { background: #fff; color: var(--navy); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+.btn-secondary { background: #fff; color: var(--navy); box-shadow: none; }
 .btn-navy { background: var(--navy); color: #fff; }
 .btn-danger { background: var(--red); color: #fff; }
 .split .btn { width: auto; flex: 1; }
@@ -562,8 +562,8 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 }
 @keyframes fall { to { transform: translateY(110vh) rotate(160deg); opacity: 0; } }
 .demo { background: var(--navy); color: #fff; padding: 12px 14px 14px; }
-.demo .btn-primary { background: var(--blue); color: #fff; }
-.demo .btn-secondary, .demo .tool { background: transparent; color: #fff; box-shadow: none; border: 1px solid rgba(255, 255, 255, 0.4); }
+.demo .btn-primary { background: var(--blue); color: #fff; border-color: #fff; }
+.demo .btn-secondary, .demo .tool { background: transparent; color: #fff; box-shadow: none; border: 2px solid rgba(255, 255, 255, 0.85); }
 .demo-row { margin-top: 8px; }
 .demo-row .btn { width: auto; flex: 1; }
 button { transition: transform 0.15s ease, opacity 0.15s ease; }
