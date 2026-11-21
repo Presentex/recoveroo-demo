@@ -157,7 +157,7 @@ function demoDock() {
 function celebrate() {
   const copy = celebrateCopy(state.metrics.justEarned);
   const bits = reduceMotion ? "" : `<div class="confetti" aria-hidden="true">${Array.from({ length: 26 }, (_, i) => {
-    const colors = ["#F07862", "#13294B", "#F6D36B", "#8FD0A6", "#FFFFFF"];
+    const colors = ["#0071E3", "#13294B", "#5EEAD4", "#FFFFFF"];
     return `<i style="left:${(i * 37) % 100}%;background:${colors[i % colors.length]};animation-delay:${(i % 7) * 0.07}s"></i>`;
   }).join("")}</div>`;
   return `<div class="celebrate" role="dialog" aria-modal="true" aria-labelledby="badge-title">
@@ -450,8 +450,18 @@ const actions = {
   rep(el) {
     const item = exerciseList(state.profile).find((entry) => entry.id === el.dataset.id);
     if (!item) return;
-    const cur = { reps: 0, done: false, feedback: null, ...(state.metrics.exercises[item.id] || {}) };
-    cur.reps = item.kind === "once" ? 1 : Math.min(item.target, (cur.reps || 0) + 1);
+    const sets = item.kind === "once" ? 1 : 2;
+    const cur = { reps: 0, set: 1, done: false, feedback: null, ...(state.metrics.exercises[item.id] || {}) };
+    if (item.kind === "once") {
+      cur.reps = 1;
+      cur.set = 1;
+    } else {
+      cur.reps = (cur.reps || 0) + 1;
+      if (cur.reps >= item.target && (cur.set || 1) < sets) {
+        cur.set = (cur.set || 1) + 1;
+        cur.reps = 0;
+      }
+    }
     state.metrics.exercises[item.id] = cur;
     save();
     render();

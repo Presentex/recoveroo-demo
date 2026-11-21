@@ -1,3 +1,4 @@
+import { bendGuide, FIGURES } from "./figures.js";
 import { esc } from "./store.js";
 
 const PATHS = {
@@ -58,17 +59,14 @@ export function choice(label, extra, pressed) {
   return `<button type="button" class="choice" aria-pressed="${pressed ? "true" : "false"}" ${extra}>${label}</button>`;
 }
 
-export function figure(motion, playing) {
-  return `<div class="stage-video ${playing ? "is-playing" : ""}" data-motion="${esc(motion)}">
-    <svg viewBox="0 0 220 140" aria-hidden="true">
-      <rect x="8" y="8" width="204" height="124" rx="18" class="vid-bg"/>
-      <circle cx="86" cy="36" r="11" class="fig"/>
-      <path d="M86 47 v28" class="fig"/>
-      <path d="M86 56 l-22 18" class="fig"/>
-      <path d="M86 58 l18 14" class="fig"/>
-      <path class="limb limb-${esc(motion)}" d="M86 75 l30 32"/>
-      <path class="fig" d="M116 107 h20"/>
+export function figure(id, playing) {
+  const inner = FIGURES[id] || FIGURES["heel-slides"];
+  return `<div class="stage-video ${playing ? "is-playing" : ""}" data-move="${esc(id)}">
+    <svg viewBox="0 0 360 210" aria-hidden="true">
+      <rect width="360" height="210" rx="24" fill="#F4F7FB"/>
+      ${inner}
     </svg>
-    <p class="vid-label">${playing ? "" : ""}</p>
   </div>`;
 }
+
+export { bendGuide };

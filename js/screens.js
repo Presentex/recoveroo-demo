@@ -6,7 +6,7 @@ import {
   L, TODAY, bendWord, dayCount, esc, expectedBend, isoShift,
   levelLabel, phaseLine, phaseOf, phoneLevel, sideLine, state, trackNoun, weekdayLabel,
 } from "./store.js";
-import { backLink, btn, choice, figure, h, icon, ring } from "./ui.js";
+import { backLink, bendGuide, btn, choice, figure, h, icon, ring } from "./ui.js";
 
 function num(n) {
   return Number(n || 0).toLocaleString(state.lang === "es" ? "es-MX" : "en-US");
@@ -86,9 +86,25 @@ function statusSentence() {
   );
 }
 
+function prepItems() {
+  return [
+    ["home", L("Clear a path and pick a firm chair", "Despeje un camino y elija una silla firme")],
+    ["ride", L("Plan the ride home", "Organice el transporte a casa")],
+    ["bag", L("Pack a small bag and charger", "Prepare una bolsa pequeña y el cargador")],
+    ["questions", L("Write questions for your surgeon", "Escriba preguntas para su cirujano")],
+  ];
+}
+
+function prepDone() {
+  return prepItems().every(([id]) => state.metrics.prep?.[id]);
+}
+
 function nextTask() {
   if (phoneLevel(state.profile, state.metrics) === "high") {
     return { href: "/alert", label: L("See what to do now", "Ver qué hacer ahora") };
+  }
+  if (phaseOf(state.profile) === "preop" && !prepDone()) {
+    return { href: "/prep", label: L("Continue getting ready", "Seguir la preparación") };
   }
   if (!exercisesDone()) {
     return { href: "/move", label: L("Start exercises", "Empezar ejercicios") };
@@ -156,7 +172,7 @@ function welcome() {
     "Recoveroo. Recuperación en casa con su teléfono. Un fisioterapeuta y asistentes revisan su avance y lo contactan cuando algo no va bien. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
   );
   return view(`
-    <section class="hero-card hero-coral bleed">
+    <section class="hero-card hero-blue bleed">
       <img class="mark" src="./favicon.svg" width="44" height="44" alt="">
       <p class="kicker">Recoveroo</p>
       <h1>${L("Healing at home, with a person watching.", "Recuperarse en casa, con alguien pendiente.")}</h1>
@@ -343,15 +359,34 @@ function today() {
   const task = nextTask();
   const hour = new Date().getHours();
   const hello = hour < 12 ? L("Good morning", "Buenos días") : hour < 18 ? L("Good afternoon", "Buenas tardes") : L("Good evening", "Buenas noches");
-  const tasks = [
-    { n: 1, href: "/move", title: L("Exercises", "Ejercicios"), detail: L(`${prog.done} of ${prog.total} done`, `${prog.done} de ${prog.total} hechos`), done: exercisesDone(), spot: "exercises" },
-    { n: 2, href: "/checkin/pain", title: L("Check-in", "Registro"), detail: checkinDone() ? L("Done today", "Hecho hoy") : L("Pain, swelling, and warning signs", "Dolor, hinchazón y señales de alerta"), done: checkinDone(), spot: "checkin" },
-    { n: 3, href: `/learn/${tip.id}`, title: L("Today's tip", "Consejo de hoy"), detail: t(tip.title), done: tipDone(), spot: "tip" },
-  ];
+  const phase = phaseOf(p);
+  const preop = phase === "preop";
+  const daysOut = Math.max(0, -dayCount(p));
+  const now = [];
+  if (phoneLevel(p, state.metrics) === "high") {
+    now.push({ href: "/alert", title: L("Warning sign", "Señal de alerta"), detail: L("See what to do now", "Ver qué hacer ahora"), tone: "tone-blue" });
+  } else {
+    if (preop && !prepDone()) {
+      const nextPrep = prepItems().find(([id]) => !state.metrics.prep?.[id]);
+      now.push({ href: "/prep", title: L("Getting ready", "Preparación"), detail: nextPrep[1], tone: "tone-navy" });
+    }
+    if (!exercisesDone()) {
+      now.push({ href: "/move", title: L("Exercises", "Ejercicios"), detail: L(`${prog.done} of ${prog.total} done`, `${prog.done} de ${prog.total} hechos`), tone: "tone-blue" });
+    }
+    if (now.length < 2 && !checkinDone()) {
+      now.push({ href: "/checkin/pain", title: L("Check-in", "Registro"), detail: L("Pain, swelling, and the wound", "Dolor, hinchazón y la herida"), tone: "tone-teal" });
+    }
+    if (now.length < 2 && !tipDone()) {
+      now.push({ href: `/learn/${tip.id}`, title: L("Today's tip", "Consejo de hoy"), detail: t(tip.title), tone: "tone-navy" });
+    }
+    if (!now.length) {
+      now.push({ href: "/track", title: L("You are done for today", "Hoy ya terminó"), detail: L("See your progress", "Ver su avance"), tone: "tone-teal" });
+    }
+  }
+  const ringLabel = preop ? String(daysOut) : `${prog.done}/${prog.total}`;
+  const ringPct = preop ? 100 : (prog.total ? Math.round((prog.done / prog.total) * 100) : 0);
   const level = phoneLevel(p, state.metrics);
-  const doneCount = tasks.filter((item) => item.done).length;
-  const tones = ["tone-coral", "tone-teal", "tone-navy"];
-  const speak = `${hello}, ${p.patientName}. ${phaseLine(p)}. ${statusSentence()} ${L("Three jobs today: exercises, check-in, and one tip.", "Tres tareas hoy: ejercicios, registro y un consejo.")}`;
+  const speak = `${hello}, ${p.patientName}. ${phaseLine(p)}. ${statusSentence()} ${now.map((item) => `${item.title}. ${item.detail}`).join(" ")}`;
   return view(`
     ${helperBanner()}
     <section class="hero-card hero-navy hero-split bleed">
@@ -360,39 +395,43 @@ function today() {
         <h1>${hello}, ${esc(p.patientName.split(" ")[0])}.</h1>
         <p class="pill pill-${level}">${levelLabel(level)}</p>
       </div>
-      ${ring(Math.round((doneCount / tasks.length) * 100), "#F07862", `${doneCount}/3`)}
+      ${ring(ringPct, "#5EEAD4", ringLabel)}
     </section>
-    <p class="lede">${statusSentence()}</p>
+    <p class="section-label">${L("Do this now", "Haga esto ahora")}</p>
     <div class="group">
-      ${tasks.map((item, index) => `<button type="button" class="task ${item.done ? "is-done" : ""}" data-href="${item.href}" data-spot="${item.spot}">
-        <span class="n ${tones[index]}">${item.done ? icon("check") : item.n}</span>
+      ${now.map((item, index) => `<button type="button" class="task" data-href="${item.href}">
+        <span class="n ${item.tone}">${index + 1}</span>
         <span><strong>${item.title}</strong><em>${esc(item.detail)}</em></span>
       </button>`).join("")}
     </div>
-    <div class="group">
-      <button type="button" class="info-row" data-href="/activity">
-        <span class="n tone-teal">${icon("steps")}</span><span><strong>${num(state.metrics.stepsToday)} ${L("steps today", "pasos hoy")}</strong><em>${L("Counted by this phone", "Contados por este teléfono")}</em></span>
-      </button>
-      <button type="button" class="info-row" data-href="/reminders">
-        <span class="n tone-amber">${icon("calendar")}</span><span><strong>${L("Tue, Nov 24 · 2:00 PM", "mar 24 nov · 2:00 p. m.")}</strong><em>${L("Video visit with Sarah Chen, PT", "Videollamada con Sarah Chen, PT")}</em></span>
-      </button>
-    </div>
-    ${!state.metrics.questions ? `<button type="button" class="text-link" data-href="/questions">${L("This week's 5 questions are ready", "Las 5 preguntas de esta semana están listas")}</button>` : ""}
-    ${phaseOf(p) === "preop" ? prepList() : ""}
   `, speak, { active: "today", footer: btn(task.label, `data-href="${task.href}"`) });
 }
 
 function prepList() {
-  const items = [
-    ["home", L("Clear a path and pick a firm chair", "Despeje un camino y elija una silla firme")],
-    ["ride", L("Plan the ride home", "Organice el transporte a casa")],
-    ["bag", L("Pack a small bag and charger", "Prepare una bolsa pequeña y el cargador")],
-    ["questions", L("Write questions for your surgeon", "Escriba preguntas para su cirujano")],
-  ];
-  return `<section class="block"><h2>${L("Getting ready", "Preparación")}</h2><div class="stack">${items.map(([id, label]) => {
+  return `<div class="group">${prepItems().map(([id, label]) => {
     const on = Boolean(state.metrics.prep?.[id]);
-    return `<button type="button" class="choice" aria-pressed="${on}" data-action="prep" data-id="${id}">${on ? "✓ " : ""}${label}</button>`;
-  }).join("")}</div></section>`;
+    return `<button type="button" class="choice" aria-pressed="${on}" data-action="prep" data-id="${id}">${on ? `${icon("check")} ` : ""}${label}</button>`;
+  }).join("")}</div>`;
+}
+
+function prep() {
+  const preop = phaseOf(state.profile) === "preop";
+  const daysOut = Math.max(0, -dayCount(state.profile));
+  return view(`
+    ${backLink("/more", L("Back", "Atrás"))}
+    ${h(
+      preop ? L(`${daysOut} days to surgery`, `${daysOut} días para la cirugía`) : L("Before surgery", "Antes de la cirugía"),
+      L("Getting ready", "Preparación"),
+      preop
+        ? L("One list for the days before surgery.", "Una lista para los días antes de la cirugía.")
+        : L("This list is for the days before surgery. Yours has already passed.", "Esta lista es para los días antes de la cirugía. La suya ya pasó."),
+    )}
+    ${prepList()}
+    <button type="button" class="text-link" data-href="/learn/ready">${L("Read how to get the home ready", "Lea cómo preparar la casa")}</button>
+  `, L("Getting ready checklist. Clear a path, plan the ride, pack a bag, and write questions for your surgeon.", "Lista de preparación. Despeje un camino, organice el transporte, prepare una bolsa y escriba preguntas para su cirujano."), {
+    active: "more",
+    footer: prepDone() ? btn(L("Back to today", "Volver a hoy"), 'data-href="/today"') : "",
+  });
 }
 
 function move() {
@@ -405,9 +444,11 @@ function move() {
         const st = exState(item.id);
         const note = st.done
           ? L(`Done · ${feedbackWord(st.feedback)}`, `Hecho · ${feedbackWord(st.feedback)}`)
-          : t(item.why);
+          : item.kind === "once"
+            ? t(item.why)
+            : L(`Set ${st.set || 1} of 2 · ${t(item.why)}`, `Serie ${st.set || 1} de 2 · ${t(item.why)}`);
         return `<button type="button" class="task ${st.done ? "is-done" : ""}" data-href="/exercise/${item.id}">
-          <span class="n tone-coral">${st.done ? icon("check") : icon("move")}</span>
+          <span class="n tone-blue">${st.done ? icon("check") : icon("move")}</span>
           <span><strong>${t(item.name)}</strong><em>${esc(note)}</em></span>
         </button>`;
       }).join("")}
@@ -433,10 +474,12 @@ function exercise() {
   if (!item) return missing();
   const st = exState(item.id);
   const playing = state.metrics.playing === item.id;
-  const ready = st.reps >= item.target || st.done;
+  const sets = item.kind === "once" ? 1 : 2;
+  const setNum = st.set || (st.done ? sets : 1);
+  const ready = st.done || (setNum >= sets && st.reps >= item.target);
   const speak = `${t(item.name)}. ${t(item.why)} ${item.kind === "once"
     ? L("When you finish, tap the big button.", "Cuando termine, toque el botón grande.")
-    : L(`Do ${item.target} slow reps. The big button counts one.`, `Haga ${item.target} repeticiones lentas. El botón grande cuenta una.`)}`;
+    : L(`Set ${setNum} of ${sets}. Do ${item.target} slow reps. The big button counts one.`, `Serie ${setNum} de ${sets}. Haga ${item.target} repeticiones lentas. El botón grande cuenta una.`)}`;
   const feedback = `
     <p class="section-label">${L("How did that feel?", "¿Cómo se sintió?")}</p>
     <div class="stack">
@@ -449,7 +492,8 @@ function exercise() {
     ${backLink("/move", L("All exercises", "Todos los ejercicios"))}
     ${h(L("Exercise", "Ejercicio"), t(item.name), t(item.why))}
     <p class="count" aria-live="polite"><strong>${item.kind === "once" ? (st.reps ? "1" : "0") : st.reps}</strong><span>${item.kind === "once" ? L("walk", "caminata") : L(`of ${item.target}`, `de ${item.target}`)}</span></p>
-    ${figure(item.motion, playing)}
+    ${item.kind === "once" ? "" : `<p class="section-label">${L(`Set ${setNum} of ${sets}`, `Serie ${setNum} de ${sets}`)}</p>`}
+    ${figure(item.id, playing)}
     <p class="fine center">${L("Video plays here. This is a simple guide, not a recording of a real person.", "El video va aquí. Es una guía simple, no una grabación de una persona real.")}</p>
     <div class="stack">${btn(playing ? L("Pause video", "Pausar video") : L("Play video", "Ver video"), `data-action="play" data-id="${item.id}"`, "secondary")}</div>
     ${ready ? "" : `<p class="fine">${L("Stop if something feels sharp or wrong.", "Pare si algo se siente punzante o mal.")}</p>`}
@@ -496,6 +540,14 @@ function checkin() {
     body = stackPicks("sleep", [[ "good", L("Slept well", "Dormí bien") ], [ "some", L("Woke a few times", "Desperté varias veces") ], [ "hard", L("Hard night", "Noche difícil") ]], draft.sleep);
   } else if (id === "fever" || id === "calf" || id === "wound" || id === "worse") {
     body = stackPicks(id, [[ "no", L("No", "No") ], [ "yes", L("Yes", "Sí") ]], draft[id] === true ? "yes" : draft[id] === false ? "no" : undefined);
+    if (id === "wound" || id === "worse") {
+      body += `<div class="stack top-gap">
+        ${btn(state.metrics.photo ? L("Sample photo added", "Foto de muestra agregada") : L("Add a sample photo", "Agregar una foto de muestra"), 'data-action="photo"', "secondary")}
+        <p class="fine">${state.metrics.photo
+          ? L("A sample picture of a covered bandage is saved. This demo does not open your camera.", "Se guardó una foto de muestra de un vendaje cubierto. Esta demo no abre su cámara.")
+          : L("Optional. This demo does not open your camera.", "Opcional. Esta demo no abre su cámara.")}</p>
+      </div>`;
+    }
   } else if (id === "meds") {
     body = stackPicks("meds", [[ "yes", L("Yes", "Sí") ], [ "notyet", L("Not yet", "Todavía no") ], [ "none", L("I do not take any", "No tomo ninguna") ]], draft.meds);
   } else {
@@ -619,7 +671,7 @@ function questions() {
   if (!route.id) {
     return view(`
       ${backLink("/more", L("Back", "Atrás"))}
-      ${h(L("This week", "Esta semana"), L("Five short questions", "Cinco preguntas cortas"), L("Written for this demo, in plain words. This is not a hospital form. Higher scores mean easier days.", "Escritas para esta demo, en palabras simples. No es un formulario del hospital. Un puntaje más alto significa días más fáciles."))}
+      ${h(L("This week", "Esta semana"), L("Five short questions", "Cinco preguntas cortas"), L("Clinics ask questions like these after knee, hip, or shoulder surgery. These are our own words. Higher scores mean easier days.", "Las clínicas hacen preguntas como estas después de una cirugía de rodilla, cadera u hombro. Estas son nuestras palabras. Un puntaje más alto significa días más fáciles."))}
     `, L("Five short questions about how the joint feels this week.", "Cinco preguntas cortas sobre cómo se siente la articulación esta semana."), {
       active: "more",
       footer: btn(L("Start", "Empezar"), 'data-href="/questions/1"'),
@@ -668,7 +720,7 @@ function activity() {
     ${backLink("/move", L("Back", "Atrás"))}
     ${h(L("From your phone", "Desde su teléfono"), num(state.metrics.stepsToday), L("steps today", "pasos hoy"))}
     <p class="lede">${L(`Sample goal: ${num(goal)} steps. Walking time: about ${state.metrics.walkMin} minutes.`, `Meta de muestra: ${num(goal)} pasos. Tiempo caminando: unos ${state.metrics.walkMin} minutos.`)}</p>
-    ${chart(steps, 0, Math.max(goal, ...steps), "#F07862")}
+    ${chart(steps, 0, Math.max(goal, ...steps), "#0071E3")}
     <p class="fine">${L("The last bar is today. Earlier bars are the sample week. Your phone counted every step.", "La última barra es hoy. Las anteriores son la semana de muestra. Su teléfono contó cada paso.")}</p>
   `, speak, { active: "move", footer: btn(L("Back to today", "Volver a hoy"), 'data-href="/today"') });
 }
@@ -686,7 +738,7 @@ function dualChart(actual, expected) {
   });
   const path = (values) => coords(values).map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
   const dots = coords(actual).map((p) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="5" fill="#13294B"></circle>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Your bend and the sample recovery path", "Su flexión y el camino de recuperación de muestra"))}"><path d="${path(expected)}" fill="none" stroke="#F07862" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path><path d="${path(actual)}" fill="none" stroke="#13294B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>${dots}</svg><p class="legend"><i class="swatch navy"></i> ${L("Your bend", "Su flexión")} <i class="swatch coral"></i> ${L("Sample path", "Camino de muestra")}</p>`;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Your bend and the sample recovery path", "Su flexión y el camino de recuperación de muestra"))}"><path d="${path(expected)}" fill="none" stroke="#0071E3" stroke-width="4" stroke-dasharray="8 6" stroke-linecap="round"></path><path d="${path(actual)}" fill="none" stroke="#13294B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"></path>${dots}</svg><p class="legend"><i class="swatch navy"></i> ${L("Your bend", "Su flexión")} <i class="swatch blue"></i> ${L("Sample path", "Camino de muestra")}</p>`;
 }
 
 function chart(values, min, max, color) {
@@ -771,17 +823,7 @@ function bend() {
 }
 
 function bendArt() {
-  return `<svg class="guide" viewBox="0 0 280 160" aria-hidden="true">
-    <rect x="1" y="1" width="278" height="158" rx="16" fill="#fff" stroke="#13294B" stroke-width="3"/>
-    <path d="M40 120 h70 v18 h-70 z" fill="#F07862"/>
-    <circle cx="108" cy="48" r="12" fill="none" stroke="#13294B" stroke-width="3"/>
-    <path d="M108 60 v34" fill="none" stroke="#13294B" stroke-width="3"/>
-    <path d="M108 94 l36 28" fill="none" stroke="#13294B" stroke-width="3" stroke-linecap="round"/>
-    <path d="M144 122 h22" fill="none" stroke="#13294B" stroke-width="3" stroke-linecap="round"/>
-    <rect x="190" y="78" width="28" height="44" rx="4" fill="none" stroke="#13294B" stroke-width="3"/>
-    <path d="M198 88 h12" stroke="#F07862" stroke-width="3"/>
-    <text x="156" y="146" fill="#13294B" font-size="18" font-family="sans-serif">${L("Phone", "Teléfono")}</text>
-  </svg>`;
+  return bendGuide().replace(">Phone<", `>${L("Phone", "Teléfono")}<`);
 }
 
 function track() {
@@ -809,9 +851,9 @@ function track() {
         <p class="pill pill-${level}">${levelLabel(level)}</p>
       </div>
       <div class="ring-row">
-        ${ring(p.track === "pain" ? 70 : bendPct, "#F07862", p.track === "pain" ? L("Pain", "Dolor") : `${latestBend || "--"}°`)}
+        ${ring(p.track === "pain" ? 70 : bendPct, "#8ECAFF", p.track === "pain" ? L("Pain", "Dolor") : `${latestBend || "--"}°`)}
         ${ring(stepPct, "#5EEAD4", num(state.metrics.stepsToday))}
-        ${ring(Math.round((earned / MILESTONES.length) * 100), "#FFB020", `${earned}/${MILESTONES.length}`)}
+        ${ring(Math.round((earned / MILESTONES.length) * 100), "#FFFFFF", `${earned}/${MILESTONES.length}`)}
       </div>
     </section>
     <p class="lede">${statusSentence()}</p>
@@ -860,7 +902,7 @@ function messages() {
     "Mensajes con Sarah Chen, fisioterapeuta. Jenna Ruiz también puede responder. Un toque llama a Sarah. Esta muestra guarda los mensajes solo en el teléfono.",
   );
   return view(`
-    <section class="hero-card hero-coral bleed">
+    <section class="hero-card hero-blue bleed">
       <p class="kicker">${L("Care team", "Equipo")}</p>
       <h1>${esc(TEAM.pt.name)}</h1>
       <p>${t(TEAM.pt.role)}${L(". Jenna Ruiz, PTA, may reply too.", ". Jenna Ruiz, PTA, también puede responder.")}</p>
@@ -983,6 +1025,7 @@ function reminders() {
 function more() {
   const rows = [
     ["/messages", "message", L("Messages and call", "Mensajes y llamada"), TEAM.pt.name],
+    ["/prep", "check", L("Getting ready", "Preparación"), L("Checklist and countdown before surgery", "Lista y cuenta regresiva antes de la cirugía")],
     ["/learn", "book", L("Lessons", "Lecciones"), L("Week by week, wound, falls, when to call", "Semana por semana, herida, caídas, cuándo llamar")],
     ["/reminders", "pill", L("Medicines and visits", "Medicinas y citas"), L("Reminders your office would set", "Recordatorios que pondría el consultorio")],
     ["/questions", "check", L("This week's questions", "Preguntas de esta semana"), L("Five plain questions", "Cinco preguntas simples")],
@@ -994,8 +1037,13 @@ function more() {
   return view(`
     ${h(L("More", "Más"), esc(state.profile.patientName), phaseLine(state.profile))}
     ${helperBanner()}
-    <div class="stack">
-      ${rows.map(([href, ic, title, detail]) => `<button type="button" class="task" data-href="${href}"><span class="n">${icon(ic)}</span><span><strong>${title}</strong><em>${esc(detail)}</em></span></button>`).join("")}
+    <div class="group">
+      ${rows.map(([href, ic, title, detail]) => `<button type="button" class="task" data-href="${href}"><span class="n tone-blue">${icon(ic)}</span><span><strong>${title}</strong><em>${esc(detail)}</em></span></button>`).join("")}
+    </div>
+    <p class="fine">${state.profile.helper
+      ? L(`${state.profile.helperName || "A family member"} can use this phone with ${state.profile.patientName}.`, `${state.profile.helperName || "Un familiar"} puede usar este teléfono con ${state.profile.patientName}.`)
+      : L("A family member can help. Set that up if someone else will tap for you.", "Un familiar puede ayudar. Configúrelo si otra persona va a tocar por usted.")}</p>
+    <div class="stack top-gap">
       ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "secondary")}
       ${btn(L("Set up again", "Preparar de nuevo"), 'data-href="/setup/hello"', "secondary")}
       ${btn(L("Reset to Maria's sample day", "Volver al día de muestra de Maria"), 'data-action="open-maria"', "secondary")}
@@ -1137,7 +1185,7 @@ function summary() {
       "Hoy no hay nada para el cirujano. Terapia está mirando el panel.",
     );
   return view(`
-    <section class="hero-card hero-coral bleed">
+    <section class="hero-card hero-blue bleed">
       <p class="kicker">${L("For Dr. Anita Patel", "Para la Dra. Anita Patel")}</p>
       <h1>${surgeonCards.length ? L("A short list, already in motion.", "Una lista corta, ya en marcha.") : L("Nothing for you today.", "Hoy no hay nada para usted.")}</h1>
       <p>${L("Prepared by Sarah Chen, PT. Nothing to enter.", "Preparado por Sarah Chen, PT. Nada que ingresar.")}</p>
@@ -1192,6 +1240,7 @@ export function renderRoute(route) {
     case "visit": return visit();
     case "learn": return learn();
     case "reminders": return reminders();
+    case "prep": return prep();
     case "more": return more();
     case "clinic": return route.id ? clinicDetail() : clinic();
     case "summary": return summary();

@@ -1,7 +1,7 @@
 :root {
   --navy: #13294b;
   --ink: #1d1d1f;
-  --coral: #f07862;
+  --blue: #0071e3;
   --teal: #087a6a;
   --teal-bright: #5eead4;
   --amber: #c2410c;
@@ -103,7 +103,7 @@ p { margin: 0 0 10px; }
   font-weight: 650;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
-.tool[data-action="speak"] { background: var(--coral); color: var(--navy); }
+.tool[data-action="speak"] { background: var(--blue); color: #fff; }
 .chip[aria-pressed="true"] { background: var(--navy); color: #fff; }
 .dock-primary {
   padding: 8px 16px 10px;
@@ -138,8 +138,8 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 }
 .nav button[aria-current="page"] { color: var(--navy); }
 .nav button[aria-current="page"] .ico {
-  background: var(--coral);
-  color: var(--navy);
+  background: var(--blue);
+  color: #fff;
   border-radius: 9px;
 }
 .ico { width: 26px; height: 26px; padding: 3px; }
@@ -153,7 +153,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   font-weight: 700;
   text-align: center;
 }
-.btn-primary, .btn-coral { background: var(--coral); color: var(--navy); }
+.btn-primary, .btn-coral { background: var(--blue); color: #fff; }
 .btn-secondary { background: #fff; color: var(--navy); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
 .btn-navy { background: var(--navy); color: #fff; }
 .btn-danger { background: var(--red); color: #fff; }
@@ -172,7 +172,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   padding: 18px 20px 22px;
 }
 .hero-navy { background: var(--navy); color: #fff; }
-.hero-coral { background: var(--coral); color: var(--navy); }
+.hero-blue { background: var(--blue); color: #fff; }
 .hero-teal { background: var(--teal); color: #fff; }
 .hero-card h1, .hero-card p, .hero-card .kicker { color: inherit; }
 .hero-split { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -191,7 +191,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 .pill-ok { background: var(--teal); color: #fff; }
 .pill-watch { background: var(--amber); color: #fff; }
 .pill-high { background: var(--red); color: #fff; }
-.hero-coral .pill-ok, .hero-coral .pill-watch, .hero-coral .pill-high { color: #fff; }
+.hero-blue .pill-ok, .hero-blue .pill-watch, .hero-blue .pill-high { color: #fff; }
 
 .ring {
   position: relative;
@@ -247,7 +247,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   box-shadow: none;
 }
 .group .choice:last-child, .group .task:last-child, .group .info-row:last-child, .group .patient:last-child { border-bottom: 0; }
-.choice[aria-pressed="true"] { background: var(--coral); color: var(--navy); }
+.choice[aria-pressed="true"] { background: var(--blue); color: #fff; }
 .choice em, .task em, .info-row em, .patient em {
   display: block;
   font-style: normal;
@@ -255,7 +255,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   margin-top: 2px;
   color: #3a3a3c;
 }
-.choice[aria-pressed="true"] em { color: var(--navy); }
+.choice[aria-pressed="true"] em { color: #fff; }
 .task, .info-row, .patient, .person { display: flex; align-items: center; gap: 12px; }
 .task::after, .info-row::after, .patient::after {
   content: "";
@@ -274,11 +274,11 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: var(--coral);
+  background: var(--blue);
   color: var(--navy);
   font-weight: 700;
 }
-.n.tone-coral { background: var(--coral); color: var(--navy); }
+.n.tone-blue { background: var(--blue); color: #fff; }
 .n.tone-teal, .task.is-done .n { background: var(--teal); color: #fff; }
 .n.tone-amber { background: var(--amber); color: #fff; }
 .n.tone-navy { background: var(--navy); color: #fff; }
@@ -292,12 +292,12 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   min-height: 44px;
   border: 0;
   background: transparent;
-  color: var(--coral);
+  color: var(--blue);
   font-weight: 600;
   padding: 8px 0;
   margin-top: 4px;
 }
-.back .ico { color: var(--coral); width: 22px; height: 22px; padding: 0; }
+.back .ico { color: var(--blue); width: 22px; height: 22px; padding: 0; }
 .text-link {
   display: flex;
   align-items: center;
@@ -338,14 +338,29 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 }
 .field textarea { min-height: 96px; }
 .bar { height: 6px; background: rgba(19, 41, 75, 0.12); border-radius: 99px; overflow: hidden; margin: 8px 0 16px; }
-.bar span { display: block; height: 100%; background: var(--coral); }
+.bar span { display: block; height: 100%; background: var(--blue); }
 .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .pain-grid .choice { min-height: 64px; text-align: center; border-radius: 16px; }
 .count { display: flex; align-items: baseline; gap: 8px; margin: 12px 0; color: var(--navy); }
-.count strong { font-size: calc(var(--text) * 3.2); line-height: 0.95; letter-spacing: -0.04em; color: var(--coral); }
+.count strong { font-size: calc(var(--text) * 3.2); line-height: 0.95; letter-spacing: -0.04em; color: var(--blue); }
 .stage-video, .guide, .chart { width: 100%; height: auto; }
 .stage-video { background: #fff; border-radius: 20px; padding: 8px; margin-bottom: 8px; }
-.stage-video svg { width: 100%; height: 120px; }
+.stage-video svg { width: 100%; height: auto; }
+.anim { transform-box: view-box; }
+.is-playing .anim-heel { animation: heel 1.6s ease-in-out infinite; }
+.is-playing .anim-foot { animation: foot 1.1s ease-in-out infinite; }
+.is-playing .anim-arm { animation: arm 1.6s ease-in-out infinite; }
+.is-playing .anim-elbow { animation: elbow 1.5s ease-in-out infinite; }
+.is-playing .anim-gentle { animation: gentle 1.6s ease-in-out infinite; }
+.is-playing .anim-rise { animation: rise 1.6s ease-in-out infinite; }
+.is-playing .anim-breath { animation: breath 1.6s ease-in-out infinite; }
+@keyframes heel { 50% { transform: rotate(-28deg); } }
+@keyframes foot { 50% { transform: rotate(28deg); } }
+@keyframes arm { 50% { transform: rotate(22deg); } }
+@keyframes elbow { 50% { transform: rotate(70deg); } }
+@keyframes gentle { 50% { transform: rotate(-18deg); } }
+@keyframes rise { 50% { transform: translateY(-16px); } }
+@keyframes breath { 50% { transform: scale(1.08); } }
 .vid-bg { fill: #fff5f3; }
 .fig, .limb { fill: none; stroke: var(--navy); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .stage-video.is-playing .limb { transform-box: fill-box; transform-origin: 0% 0%; animation: swing 1.3s ease-in-out infinite; }
@@ -358,8 +373,8 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   left: 16px;
   right: 16px;
   bottom: 16px;
-  background: var(--coral);
-  color: var(--navy);
+  background: var(--blue);
+  color: #fff;
   border-radius: 980px;
   padding: 8px 12px;
   font-weight: 700;
@@ -368,7 +383,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 .legend { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-weight: 650; }
 .swatch { width: 14px; height: 14px; border-radius: 99px; display: inline-block; }
 .swatch.navy { background: var(--navy); }
-.swatch.coral { background: var(--coral); }
+.swatch.blue { background: var(--blue); }
 .badges { display: flex; flex-direction: column; gap: 8px; }
 .badge {
   display: flex;
@@ -394,12 +409,12 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
   height: 88px;
   margin: 18px auto;
   font-size: calc(var(--text) * 1.3);
-  background: var(--coral);
-  color: var(--navy);
+  background: var(--blue);
+  color: #fff;
 }
 .big-num { font-size: calc(var(--text) * 2.2); font-weight: 700; letter-spacing: -0.04em; margin: 8px 0; color: var(--navy); }
 .visit { background: var(--navy); color: #fff; border-radius: 22px; padding: 24px 16px; margin: 12px 0; }
-.visit .avatar { background: var(--coral); color: var(--navy); }
+.visit .avatar { background: var(--blue); color: #fff; }
 .person { background: #fff; border-radius: 18px; padding: 12px; margin-bottom: 8px; }
 .person em { display: block; font-style: normal; font-weight: 500; color: #3a3a3c; }
 .level-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--teal); flex: 0 0 12px; }
@@ -458,7 +473,7 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 }
 @keyframes fall { to { transform: translateY(110vh) rotate(160deg); opacity: 0; } }
 .demo { background: var(--navy); color: #fff; padding: 12px 14px 14px; }
-.demo .btn-primary { background: var(--coral); color: var(--navy); }
+.demo .btn-primary { background: var(--blue); color: #fff; }
 .demo .btn-secondary, .demo .tool { background: transparent; color: #fff; box-shadow: none; border: 1px solid rgba(255, 255, 255, 0.4); }
 .demo-row { margin-top: 8px; }
 .demo-row .btn { width: auto; flex: 1; }
