@@ -1,5 +1,56 @@
 import { bendGuide, FIGURES } from "./figures.js";
-import { esc } from "./store.js";
+import { esc, L } from "./store.js";
+
+const pair = (en, es) => ({ en, es });
+const cueText = (obj) => (obj ? obj[L("en", "es") === "es" ? "es" : "en"] : "");
+
+export const VIDEOS = {
+  "heel-slides": {
+    src: "assets/videos/heel-slides.mp4",
+    poster: "assets/videos/heel-slides.jpg",
+    cue: pair("Slide your heel toward your body, then straighten.", "Deslice el talón hacia el cuerpo y luego estire."),
+  },
+  "quad-sets": {
+    src: "assets/videos/quad-sets.mp4",
+    poster: "assets/videos/quad-sets.jpg",
+    cue: pair("Keep the leg straight. Tighten the front of the thigh, then relax.", "Mantenga la pierna estirada. Apriete la parte de adelante del muslo y luego relaje."),
+  },
+  "ankle-pumps": {
+    src: "assets/videos/ankle-pumps.mp4",
+    poster: "assets/videos/ankle-pumps.jpg",
+    cue: pair("Point your toes, then pull them back toward you.", "Apunte los dedos del pie y luego tráigalos hacia usted."),
+  },
+  "short-walk": {
+    src: "assets/videos/short-walk.mp4",
+    poster: "assets/videos/short-walk.jpg",
+    cue: pair("Walk slowly for a few minutes around your home.", "Camine despacio unos minutos por su casa."),
+  },
+  "easy-walk": {
+    src: "assets/videos/short-walk.mp4",
+    poster: "assets/videos/short-walk.jpg",
+    cue: pair("Walk slowly for a few minutes around your home.", "Camine despacio unos minutos por su casa."),
+  },
+};
+
+export function hasVideo(id) {
+  return Boolean(VIDEOS[id]);
+}
+
+function playIcon() {
+  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M8 6.5v11l9-5.5z"/></svg>`;
+}
+
+function pauseIcon() {
+  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="6.5" y="6" width="4" height="12" rx="1"/><rect x="13.5" y="6" width="4" height="12" rx="1"/></svg>`;
+}
+
+export function syncVidToggle(video) {
+  const btn = video.parentElement?.querySelector(".vid-toggle");
+  if (!btn) return;
+  const paused = video.paused;
+  btn.innerHTML = paused ? playIcon() : pauseIcon();
+  btn.setAttribute("aria-label", paused ? L("Play video", "Ver video") : L("Pause video", "Pausar video"));
+}
 
 const PATHS = {
   home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M7 10.5V20h10v-9.5"/>',
@@ -60,6 +111,14 @@ export function choice(label, extra, pressed) {
 }
 
 export function figure(id, playing) {
+  const vid = VIDEOS[id];
+  if (vid) {
+    return `<div class="stage-video has-clip" data-move="${esc(id)}">
+      <video class="ex-clip" data-id="${esc(id)}" src="${vid.src}" poster="${vid.poster}" muted loop playsinline autoplay preload="metadata"></video>
+      <button type="button" class="vid-toggle" data-action="play" data-id="${esc(id)}" aria-label="${L("Pause video", "Pausar video")}">${pauseIcon()}</button>
+    </div>
+    <p class="fine center">${cueText(vid.cue)}</p>`;
+  }
   const inner = FIGURES[id] || FIGURES["heel-slides"];
   return `<div class="stage-video ${playing ? "is-playing" : ""}" data-move="${esc(id)}">
     <svg viewBox="0 0 360 210" aria-hidden="true">

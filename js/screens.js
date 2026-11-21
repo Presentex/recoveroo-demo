@@ -6,7 +6,7 @@ import {
   L, TODAY, bendWord, dayCount, esc, expectedBend, isoShift,
   levelLabel, phaseLine, phaseOf, phoneLevel, sideLine, state, trackNoun, weekdayLabel,
 } from "./store.js";
-import { backLink, bendGuide, btn, choice, figure, h, icon, ring } from "./ui.js";
+import { backLink, bendGuide, btn, choice, figure, h, hasVideo, icon, ring } from "./ui.js";
 
 function num(n) {
   return Number(n || 0).toLocaleString(state.lang === "es" ? "es-MX" : "en-US");
@@ -494,8 +494,7 @@ function exercise() {
     <p class="count" aria-live="polite"><strong>${item.kind === "once" ? (st.reps ? "1" : "0") : st.reps}</strong><span>${item.kind === "once" ? L("walk", "caminata") : L(`of ${item.target}`, `de ${item.target}`)}</span></p>
     ${item.kind === "once" ? "" : `<p class="section-label">${L(`Set ${setNum} of ${sets}`, `Serie ${setNum} de ${sets}`)}</p>`}
     ${figure(item.id, playing)}
-    <p class="fine center">${L("Video plays here. This is a simple guide, not a recording of a real person.", "El video va aquí. Es una guía simple, no una grabación de una persona real.")}</p>
-    <div class="stack">${btn(playing ? L("Pause video", "Pausar video") : L("Play video", "Ver video"), `data-action="play" data-id="${item.id}"`, "secondary")}</div>
+    ${hasVideo(item.id) ? "" : `<div class="stack">${btn(playing ? L("Pause video", "Pausar video") : L("Play video", "Ver video"), `data-action="play" data-id="${item.id}"`, "secondary")}</div>`}
     ${ready ? "" : `<p class="fine">${L("Stop if something feels sharp or wrong.", "Pare si algo se siente punzante o mal.")}</p>`}
   `, speak, {
     active: "move",

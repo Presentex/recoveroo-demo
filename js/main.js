@@ -3,7 +3,7 @@ import { celebrateCopy, renderRoute, routeOf, shareText } from "./screens.js";
 import {
   L, TODAY, earn, esc, freshMetrics, hydrate, loadSample, save, state,
 } from "./store.js";
-import { icon } from "./ui.js";
+import { icon, syncVidToggle } from "./ui.js";
 
 const app = document.getElementById("app");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -241,6 +241,12 @@ function render() {
   });
   if (route.name !== "call") clearCall();
   else armCall();
+  app.querySelectorAll("video.ex-clip").forEach((video) => {
+    const sync = () => syncVidToggle(video);
+    video.addEventListener("play", sync);
+    video.addEventListener("pause", sync);
+    sync();
+  });
 }
 
 function readField(name) {
@@ -444,6 +450,13 @@ const actions = {
     navigate(`/questions/${n + 1}`);
   },
   play(el) {
+    const video = app.querySelector(`video.ex-clip[data-id="${el.dataset.id}"]`);
+    if (video) {
+      if (video.paused) video.play();
+      else video.pause();
+      syncVidToggle(video);
+      return;
+    }
     state.metrics.playing = state.metrics.playing === el.dataset.id ? "" : el.dataset.id;
     render();
   },
