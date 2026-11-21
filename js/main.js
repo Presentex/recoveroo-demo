@@ -201,7 +201,7 @@ function asideCopy(clinic) {
   title.textContent = clinic ? L("Care team desk", "Escritorio del equipo") : "Recoveroo";
   copy.textContent = clinic
     ? L("Sorted by who needs a person. The surgeon page is one short list.", "Ordenado por quién necesita a una persona. La página del cirujano es una lista corta.")
-    : L("At-home recovery on the phone they already have. A therapist watches with them.", "Recuperación en casa, en el teléfono que ya tienen. Un terapeuta los acompaña.");
+    : L("At-home recovery on the phone they already have. Your care team reviews their progress.", "Recuperación en casa, en el teléfono que ya tienen. Su equipo revisa su avance.");
 }
 
 function render() {

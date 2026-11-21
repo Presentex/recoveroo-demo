@@ -168,15 +168,15 @@ function view(html, speak, extra = {}) {
 
 function welcome() {
   const speak = L(
-    "Recoveroo. Healing at home with your phone. A physical therapist and therapy assistants review your progress and reach out when something is off. Open the patient phone, play the guided tour, or open the care team desk.",
-    "Recoveroo. Recuperación en casa con su teléfono. Un fisioterapeuta y asistentes revisan su avance y lo contactan cuando algo no va bien. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
+    "Recoveroo. Recover at home, on your phone. For recovery after hip, knee, or shoulder surgery, and for muscle and joint pain without surgery. Your care team reviews your progress. Open the patient phone, play the guided tour, or open the care team desk.",
+    "Recoveroo. Recupérese en casa, en su teléfono. Para la recuperación después de una cirugía de cadera, rodilla u hombro, y para dolor muscular y articular sin cirugía. Su equipo revisa su avance. Abra el teléfono del paciente, el recorrido, o el escritorio del equipo.",
   );
   return view(`
     <section class="hero-card hero-blue bleed">
-      <h1>${L("Healing at home, with a person watching.", "Recuperarse en casa, con alguien pendiente.")}</h1>
+      <h1>${L("Recover at home, on your phone.", "Recupérese en casa, en su teléfono.")}</h1>
       <p>${L(
-        "Hip, knee, and shoulder replacement, plus muscle and joint pain without surgery. You only need your phone.",
-        "Reemplazo de cadera, rodilla y hombro, y dolor muscular y articular sin cirugía. Solo necesita su teléfono.",
+        "For recovery after hip, knee, or shoulder surgery, and for muscle and joint pain without surgery.",
+        "Para la recuperación después de una cirugía de cadera, rodilla u hombro, y para dolor muscular y articular sin cirugía.",
       )}</p>
     </section>
     <div class="stack">
@@ -299,7 +299,7 @@ function setup() {
     return view(`
       ${setupProgress(6, total)}
       ${backLink("/setup/when", L("Back", "Atrás"))}
-      ${h(L("Your team", "Su equipo"), L("Meet the people who watch your progress.", "Conozca a quienes revisan su avance."), L("This is a sample team for the demo.", "Este es un equipo de muestra para la demo."))}
+      ${h(L("Your team", "Su equipo"), L("Meet the people who review your progress.", "Conozca a quienes revisan su avance."), L("This is a sample team for the demo.", "Este es un equipo de muestra para la demo."))}
       ${teamCards()}
     `, L("Sarah Chen is the physical therapist. Jenna Ruiz assists. Dr. Anita Patel is the surgeon.", "Sarah Chen es la fisioterapeuta. Jenna Ruiz asiste. La Dra. Anita Patel es la cirujana."), {
       nav: "none",
@@ -1412,12 +1412,12 @@ function summary() {
   const noted = Boolean(state.metrics.summaryNoted);
   const speak = surgeonCards.length
     ? L(
-      `${surgeonCards.length} names need a surgeon's eye. Therapy is already handling the calls. The other patients stay with the therapy team. Nothing to type and nothing to sign.`,
-      `${surgeonCards.length} nombres necesitan la mirada del cirujano. Terapia ya está haciendo las llamadas. Los demás se quedan con el equipo de terapia. Nada que escribir y nada que firmar.`,
+      `${surgeonCards.length} names need a surgeon's review. Therapy is already handling the calls. The other patients stay with the therapy team. Nothing to type and nothing to sign.`,
+      `${surgeonCards.length} nombres necesitan la revisión del cirujano. Terapia ya está haciendo las llamadas. Los demás se quedan con el equipo de terapia. Nada que escribir y nada que firmar.`,
     )
     : L(
-      "Nothing for the surgeon today. Therapy is watching the panel.",
-      "Hoy no hay nada para el cirujano. Terapia está mirando el panel.",
+      "Nothing for the surgeon today. Your care team is reviewing the list.",
+      "Hoy no hay nada para el cirujano. Su equipo está revisando la lista.",
     );
   return view(`
     <section class="hero-card hero-blue bleed">
@@ -1438,7 +1438,7 @@ function summary() {
         return `<article class="letter"><h2>${esc(card.name)}</h2><p>${esc(reason)}</p><p>${called ? L("Therapy already marked a call.", "Terapia ya marcó una llamada.") : L("Therapy has not marked a call yet.", "Terapia todavía no marca una llamada.")}</p></article>`;
       }).join("")}
     </div>
-    ${noted ? `<p class="banner">${L("You noted this today. Therapy keeps watching.", "Hoy usted tomó nota. Terapia sigue pendiente.")}</p>` : ""}
+    ${noted ? `<p class="banner">${L("You noted this today. Your care team keeps reviewing.", "Hoy usted tomó nota. Su equipo sigue revisando.")}</p>` : ""}
     <p class="fine">${L("Covered by most Medicare and Medicare Advantage plans. Your usual copay may apply.", "Cubierto por la mayoría de los planes de Medicare y Medicare Advantage. Puede aplicar su copago habitual.")}</p>
   `, speak, {
     nav: "clinic",

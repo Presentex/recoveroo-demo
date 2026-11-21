@@ -439,7 +439,7 @@ export const CLINIC = [
 ];
 
 export const DEMO = [
-  { href: "/welcome", title: pair("This is Recoveroo", "Esto es Recoveroo"), body: pair("Patients use only their phone. A therapist watches and reaches out when something is off.", "El paciente usa solo su teléfono. Un terapeuta revisa y llama cuando algo no va bien.") },
+  { href: "/welcome", title: pair("This is Recoveroo", "Esto es Recoveroo"), body: pair("Patients use only their phone. Your care team reviews your progress and reaches out when something is off.", "El paciente usa solo su teléfono. Su equipo revisa su avance y llama cuando algo no va bien.") },
   { href: "/setup/track", title: pair("Setup is a few big steps", "La preparación son unos pasos grandes"), body: pair("Knee, hip, shoulder, or pain without surgery. A family member can tap for them.", "Rodilla, cadera, hombro, o dolor sin cirugía. Un familiar puede tocar la pantalla por ellos.") },
   { href: "/today", title: pair("Today has three jobs", "Hoy hay tres tareas"), body: pair("Exercises, a short check-in, and one lesson. One big button starts the next job.", "Ejercicios, un registro corto y una lección. Un botón grande empieza la siguiente tarea.") },
   { href: "/exercise/quad-sets", title: pair("Moves are simple to follow", "Los ejercicios son fáciles de seguir"), body: pair("A video placeholder, a big counter, and a choice: too easy, just right, or too hard.", "Un video de muestra, un contador grande y una opción: muy fácil, bien así, o muy difícil.") },
