@@ -179,11 +179,11 @@ function welcome() {
         "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Solo necesita su teléfono.",
       )}</p>
     </section>
-    <div class="stack">
+    <div class="stack welcome-actions">
       ${btn(L("Open Maria's phone", "Abrir el teléfono de Maria"), 'data-action="open-maria"')}
       ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
-      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "secondary")}
-      ${btn(L("Set up someone new", "Preparar a otra persona"), 'data-href="/setup/hello"', "secondary")}
+      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "desk")}
+      ${btn(L("Set up someone new", "Preparar a otra persona"), 'data-href="/setup/hello"', "setup")}
     </div>
     <p class="fine">${L(
       "Fictional sample. Not a real clinic and not medical advice. The people on this phone are made up.",

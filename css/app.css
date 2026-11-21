@@ -163,6 +163,9 @@ body.clinic .nav { grid-template-columns: repeat(3, 1fr); }
 }
 .btn-primary, .btn-coral { background: var(--accent); color: var(--navy); }
 .btn-secondary { background: #fff; color: var(--navy); box-shadow: none; }
+.btn-desk { background: #E3E9F2; color: var(--navy); }
+.btn-setup { background: #FDE8E3; color: var(--navy); }
+.welcome-actions .btn-desk { margin-top: 8px; }
 .btn-navy { background: var(--navy); color: #fff; }
 .btn-danger { background: var(--red); color: #fff; }
 .split .btn { width: auto; flex: 1; }
