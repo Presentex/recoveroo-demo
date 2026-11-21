@@ -173,8 +173,6 @@ function welcome() {
   );
   return view(`
     <section class="hero-card hero-blue bleed">
-      <img class="mark" src="./favicon.svg" width="44" height="44" alt="">
-      <p class="kicker">Recoveroo</p>
       <h1>${L("Healing at home, with a person watching.", "Recuperarse en casa, con alguien pendiente.")}</h1>
       <p>${L(
         "Hip, knee, and shoulder replacement, plus muscle and joint pain without surgery. You only need your phone.",

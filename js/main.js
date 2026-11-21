@@ -106,7 +106,7 @@ function tools(route, clinic) {
   const atMax = state.text === sizes[sizes.length - 1];
   return `<div class="tools">
     <button type="button" class="brand" data-href="${home}">
-      <img src="./favicon.svg" width="40" height="40" alt="">
+      <img src="./logo.svg" width="22" height="12" alt="">
       <span>Recoveroo</span>
     </button>
     <div class="tool-row">
