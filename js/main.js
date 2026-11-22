@@ -232,6 +232,7 @@ function landingBar() {
     ["#how", L("How it works", "Cómo funciona")],
     ["#for-patients", L("For patients", "Para pacientes")],
     ["#for-practices", L("For practices", "Para clínicas")],
+    ["/surgeons", L("For surgeons", "Para cirujanos")],
   ];
   return `
     <button type="button" class="brand" data-scroll="#how">
@@ -239,7 +240,9 @@ function landingBar() {
       <span>recoveroo</span>
     </button>
     <nav class="landing-nav" aria-label="${L("On this page", "En esta página")}">
-      ${links.map(([href, label]) => `<button type="button" data-scroll="${href}">${label}</button>`).join("")}
+      ${links.map(([href, label]) => href.startsWith("/")
+        ? `<button type="button" data-href="${href}">${label}</button>`
+        : `<button type="button" data-scroll="${href}">${label}</button>`).join("")}
       <button type="button" data-href="/clinic">${L("Care team", "Equipo")}</button>
     </nav>
     <button type="button" class="book-demo" data-action="demo-start">${L("Book a demo", "Reservar una demo")}</button>
@@ -316,7 +319,9 @@ function render() {
   document.body.dataset.screen = route.name;
   state.speakText = view.speak || "";
   const clinic = view.nav === "clinic";
-  document.body.classList.toggle("clinic", clinic);
+  const surgeon = view.nav === "surgeon";
+  document.body.classList.toggle("clinic", clinic || surgeon);
+  document.body.classList.toggle("surgeon", surgeon);
   document.documentElement.lang = state.lang === "es" ? "es" : "en";
   document.documentElement.style.setProperty("--text", `${state.text}px`);
   asideCopy(clinic);
@@ -831,6 +836,15 @@ const actions = {
       const play = video.play();
       if (play?.catch) play.catch(() => {});
     }
+  },
+  "dash-filter"(el) {
+    state.metrics.dashFilters = state.metrics.dashFilters || { procedure: "all", status: "all" };
+    state.metrics.dashFilters[el.dataset.key] = el.dataset.value;
+    save();
+    render();
+  },
+  "print-report"() {
+    window.print();
   },
   span(el) {
     state.metrics.chartSpan = el.dataset.value;

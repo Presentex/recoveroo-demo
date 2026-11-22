@@ -1,5 +1,5 @@
 import {
-  ARTICLES, CLINIC, MILESTONES, QUESTIONS, ANSWERS, TEAM,
+  ARTICLES, CLINIC, MILESTONES, QUESTIONS, ANSWERS, SURGEON_PANEL, TEAM,
   articleById, dailyTipId, exerciseList, t,
 } from "./content.js";
 import {
@@ -183,6 +183,7 @@ function welcome() {
     <div class="stack welcome-actions">
       ${btn(L("Try Maria's app", "Probar la app de Maria"), 'data-action="open-maria"')}
       ${btn(L("See how practices use it", "Ver cómo lo usa la clínica"), 'data-href="/clinic"', "secondary")}
+      ${btn(L("For surgeons", "Para cirujanos"), 'data-href="/surgeons"', "navy")}
       ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
       ${btn(L("Set up a new patient", "Preparar a un paciente nuevo"), 'data-href="/setup/hello"', "setup")}
     </div>
@@ -1467,6 +1468,185 @@ function summary() {
   });
 }
 
+function procedureLabel(id) {
+  return {
+    knee: L("Knee replacement", "Reemplazo de rodilla"),
+    hip: L("Hip replacement", "Reemplazo de cadera"),
+    shoulder: L("Shoulder replacement", "Reemplazo de hombro"),
+    other: L("Other joint and muscle recovery", "Otra recuperación de músculos y articulaciones"),
+  }[id] || id;
+}
+
+function statusLabel(level) {
+  if (level === "high") return L("High", "Alto");
+  if (level === "watch") return L("Watch", "Observar");
+  return L("On track", "Va bien");
+}
+
+function painArrow(dir) {
+  if (dir === "down") return "↓";
+  if (dir === "up") return "↑";
+  return "→";
+}
+
+function surgeonFilters() {
+  const saved = state.metrics.dashFilters || {};
+  return {
+    procedure: saved.procedure || "all",
+    status: saved.status || "all",
+  };
+}
+
+function surgeonList() {
+  const rank = { high: 0, watch: 1, ok: 2 };
+  const filters = surgeonFilters();
+  return SURGEON_PANEL
+    .filter((item) => filters.procedure === "all" || item.procedure === filters.procedure)
+    .filter((item) => filters.status === "all" || item.level === filters.status)
+    .slice()
+    .sort((a, b) => rank[a.level] - rank[b.level] || a.name.localeCompare(b.name));
+}
+
+function weekTrend(values, color) {
+  const nums = values.filter((value) => Number(value) > 0);
+  const source = nums.length ? values : [0, 0, 0, 0];
+  const min = Math.min(...source);
+  const max = Math.max(...source, min + 1);
+  const w = 280;
+  const h = 92;
+  const coords = source.map((value, i) => {
+    const x = 16 + (i / 3) * (w - 32);
+    const y = 16 + (1 - (value - min) / (max - min)) * (h - 36);
+    return [x, y];
+  });
+  const d = coords.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const dots = coords.map((p) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${color}"></circle>`).join("");
+  const labels = [1, 2, 3, 4].map((week, i) => `<text x="${coords[i][0].toFixed(1)}" y="${h - 4}" text-anchor="middle" fill="#4E5A70" font-size="12" font-family="Nunito, sans-serif">${L(`W${week}`, `S${week}`)}</text>`).join("");
+  return `<svg class="surg-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(L("Four week trend", "Tendencia de 4 semanas"))}"><path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>${dots}${labels}</svg>`;
+}
+
+function surgeonChrome(title) {
+  return `<header class="surg-head">
+    <div>
+      <p class="kicker">${L("Example data", "Datos de ejemplo")}</p>
+      <h1>${title}</h1>
+      <p class="lede">${L("Dr. Example", "Dr. Example")} · ${L("Nov 15 to Nov 21, 2026", "15 al 21 de nov de 2026")}</p>
+    </div>
+    <div class="surg-links no-print">
+      ${btn(L("Dashboard", "Tablero"), 'data-href="/surgeons"', "secondary")}
+      ${btn(L("Weekly report", "Informe semanal"), 'data-href="/surgeons/report"', "navy")}
+    </div>
+  </header>`;
+}
+
+function surgeonDash() {
+  const filters = surgeonFilters();
+  const rows = surgeonList();
+  const procedures = [
+    ["all", L("All procedures", "Todos los procedimientos")],
+    ["knee", L("Knee replacement", "Reemplazo de rodilla")],
+    ["hip", L("Hip replacement", "Reemplazo de cadera")],
+    ["shoulder", L("Shoulder replacement", "Reemplazo de hombro")],
+    ["other", L("Other joint and muscle recovery", "Otra recuperación")],
+  ];
+  const statuses = [
+    ["all", L("All statuses", "Todos los estados")],
+    ["high", L("High", "Alto")],
+    ["watch", L("Watch", "Observar")],
+    ["ok", L("On track", "Va bien")],
+  ];
+  const chips = (key, options, current) => options.map(([value, label]) => `<button type="button" class="chip" aria-pressed="${current === value}" data-action="dash-filter" data-key="${key}" data-value="${value}">${label}</button>`).join("");
+  const cell = (label, html) => `<td data-label="${esc(label)}">${html}</td>`;
+  const table = `<div class="table-wrap surg-wrap"><table class="desk-table surg-table">
+    <thead><tr>
+      <th>${L("Patient", "Paciente")}</th>
+      <th>${L("Procedure", "Procedimiento")}</th>
+      <th>${L("Days since surgery", "Días desde la cirugía")}</th>
+      <th>${L("Days logged", "Días registrados")}</th>
+      <th>${L("Exercises", "Ejercicios")}</th>
+      <th>${L("Pain", "Dolor")}</th>
+      <th>${L("Range of motion", "Rango de movimiento")}</th>
+      <th>${L("Status", "Estado")}</th>
+    </tr></thead>
+    <tbody>${rows.map((item) => `<tr data-href="/surgeons/${item.id}">
+      ${cell(L("Patient", "Paciente"), `<strong>${esc(item.name)}</strong>`)}
+      ${cell(L("Procedure", "Procedimiento"), procedureLabel(item.procedure))}
+      ${cell(L("Days since surgery", "Días desde la cirugía"), item.day == null ? L("Not yet", "Todavía no") : String(item.day))}
+      ${cell(L("Days logged", "Días registrados"), `${item.logged} ${L("of 7", "de 7")}`)}
+      ${cell(L("Exercises", "Ejercicios"), `${item.exercisePct}%`)}
+      ${cell(L("Pain", "Dolor"), `<span class="pain-trend pain-${item.painDir}">${painArrow(item.painDir)} ${item.pain}</span>`)}
+      ${cell(L("Range of motion", "Rango de movimiento"), item.rom == null ? L("Not started", "Sin empezar") : `${item.rom}° / ${L("goal", "meta")} ${item.goal}°`)}
+      ${cell(L("Status", "Estado"), `<span class="risk risk-${item.level}">${statusLabel(item.level)}</span>`)}
+    </tr>`).join("") || `<tr><td colspan="8">${L("No example patients match these filters.", "Ningún paciente de ejemplo coincide con estos filtros.")}</td></tr>`}</tbody>
+  </table></div>`;
+  return view(`
+    ${surgeonChrome(L("Surgeon dashboard", "Tablero del cirujano"))}
+    <p class="fine">${L("Example patients for easy reference. This is not a real clinic.", "Pacientes de ejemplo para consulta fácil. No es una clínica real.")}</p>
+    <div class="surg-filters no-print">
+      <div class="filters">${chips("procedure", procedures, filters.procedure)}</div>
+      <div class="filters">${chips("status", statuses, filters.status)}</div>
+    </div>
+    ${table}
+  `, L("Surgeon dashboard. Example data for Dr. Example. Patients who need attention are listed first.", "Tablero del cirujano. Datos de ejemplo para Dr. Example. Quienes necesitan atención aparecen primero."), { nav: "surgeon" });
+}
+
+function surgeonDetail() {
+  const item = SURGEON_PANEL.find((entry) => entry.id === routeOf().id);
+  if (!item) return missing();
+  return view(`
+    ${backLink("/surgeons", L("All patients", "Todos los pacientes"))}
+    <p class="kicker">${L("Example data", "Datos de ejemplo")}</p>
+    ${h(statusLabel(item.level), esc(item.name), procedureLabel(item.procedure))}
+    <ul class="plain">
+      <li>${L("Days since surgery", "Días desde la cirugía")}: ${item.day == null ? L("Not yet", "Todavía no") : item.day}</li>
+      <li>${L("Days logged this week", "Días registrados esta semana")}: ${item.logged} ${L("of 7", "de 7")}</li>
+      <li>${L("Exercises completed", "Ejercicios completados")}: ${item.exercisePct}%</li>
+      <li>${L("Pain", "Dolor")}: ${painArrow(item.painDir)} ${item.pain} ${L("out of 10", "de 10")}</li>
+      <li>${item.romLabel}: ${item.rom == null ? L("Not started", "Sin empezar") : `${item.rom}° / ${L("goal", "meta")} ${item.goal}°`}</li>
+    </ul>
+    <section class="block card">
+      <h2>${L("4-week trend", "Tendencia de 4 semanas")}</h2>
+      <p class="fine">${L("Pain, 0 to 10", "Dolor, de 0 a 10")}</p>
+      ${weekTrend(item.painWeeks, "#13294B")}
+      <p class="fine">${esc(item.romLabel)}</p>
+      ${item.rom == null ? `<p>${L("Range of motion has not started.", "El rango de movimiento no ha empezado.")}</p>` : weekTrend(item.romWeeks, "#F07862")}
+    </section>
+    <div class="stack no-print">
+      ${btn(L("Weekly report", "Informe semanal"), 'data-href="/surgeons/report"')}
+    </div>
+  `, `${item.name}. ${procedureLabel(item.procedure)}. ${statusLabel(item.level)}.`, { nav: "surgeon" });
+}
+
+function surgeonReport() {
+  const rows = SURGEON_PANEL.slice().sort((a, b) => ({ high: 0, watch: 1, ok: 2 }[a.level] - { high: 0, watch: 1, ok: 2 }[b.level]));
+  const onTrack = rows.filter((item) => item.level === "ok").length;
+  const watch = rows.filter((item) => item.level === "watch").length;
+  const low = rows.filter((item) => item.logged <= 2).length;
+  const line = (item) => `<li><strong>${esc(item.name)}</strong> · ${procedureLabel(item.procedure)} · ${item.day == null ? L("Not yet", "Todavía no") : `${item.day} ${L("days", "días")}`} · ${statusLabel(item.level)} · ${L("pain", "dolor")} ${painArrow(item.painDir)} ${item.pain} · ${item.logged}/7 ${L("days logged", "días registrados")}</li>`;
+  return view(`
+    <article class="surg-report">
+      ${surgeonChrome(L("Weekly patient report", "Informe semanal de pacientes"))}
+      <p class="fine no-print">${L("One page for easy reference. Example data.", "Una página para consulta fácil. Datos de ejemplo.")}</p>
+      <div class="surg-counts">
+        <article><strong>${rows.length}</strong><span>${L("Total patients", "Total de pacientes")}</span></article>
+        <article><strong>${onTrack}</strong><span>${L("On track", "Va bien")}</span></article>
+        <article><strong>${watch}</strong><span>${L("Watch", "Observar")}</span></article>
+        <article><strong>${low}</strong><span>${L("Low engagement", "Poca participación")}</span></article>
+      </div>
+      <h2>${L("Patient list", "Lista de pacientes")}</h2>
+      <ul class="plain surg-report-list">${rows.map(line).join("")}</ul>
+      <section class="block card">
+        <h2>${L("Notes", "Notas")}</h2>
+        <p>${L("Reviewed by the Recoveroo care team (licensed PT).", "Revisado por el equipo de Recoveroo (PT con licencia).")}</p>
+        <p class="fine">${L("Example data for Dr. Example. Not a real clinic and not medical advice.", "Datos de ejemplo para Dr. Example. No es una clínica real ni un consejo médico.")}</p>
+      </section>
+      <div class="no-print stack">
+        ${btn(L("Print / Save PDF", "Imprimir / Guardar PDF"), 'data-action="print-report"')}
+      </div>
+    </article>
+  `, L("Weekly patient report for Dr. Example. Nov 15 to Nov 21, 2026. Example data.", "Informe semanal para Dr. Example. 15 al 21 de nov de 2026. Datos de ejemplo."), { nav: "surgeon" });
+}
+
 function missing() {
   return view(`
     ${h(L("Missing page", "Página no está"), L("That screen is not in this sample.", "Esa pantalla no está en esta muestra."), "")}
@@ -1503,6 +1683,10 @@ export function renderRoute(route) {
       return clinicDetail();
     }
     case "summary": return summary();
+    case "surgeons":
+      if (!route.id) return surgeonDash();
+      if (route.id === "report") return surgeonReport();
+      return surgeonDetail();
     default: return missing();
   }
 }

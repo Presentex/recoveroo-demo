@@ -1031,3 +1031,45 @@ body.frame[data-screen="exercise"] .scroll > h2,
 body.frame[data-screen="exercise"] .scroll > .group { display: none; }
 body.frame[data-screen="bend"] .sheet-actions,
 body.frame[data-screen="bend"] .result-sheet > .btn { display: none; }
+
+body.surgeon .tools { display: none; }
+body.surgeon .scroll { background: var(--cream); padding: 24px 20px 56px; }
+.surg-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.surg-head h1 { margin-bottom: 0; }
+.surg-links { display: flex; gap: 8px; }
+.surg-links .btn { width: auto; min-width: 160px; }
+.surg-filters { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 16px; }
+.surg-counts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0 18px; }
+.surg-counts article { background: #fff; border-radius: 20px; padding: 14px; }
+.surg-counts strong { display: block; font-size: 1.8rem; color: var(--navy); }
+.surg-counts article:nth-child(3) { background: #ffe2b8; }
+.surg-counts article:nth-child(4) { background: #fde8e0; }
+.pain-trend { font-weight: 800; }
+.pain-down { color: #146b50; }
+.pain-up { color: #c2410c; }
+.pain-flat { color: var(--navy); }
+.surg-chart { width: 100%; height: auto; background: #fff; border-radius: 16px; }
+.surg-report-list { padding-left: 18px; }
+.surg-report-list li { margin: 0 0 8px; }
+@media (max-width: 800px) {
+  .surg-counts { grid-template-columns: 1fr 1fr; }
+  .surg-table thead { display: none; }
+  .surg-table tr { display: block; margin: 0 0 12px; background: #fff; border-radius: 18px; padding: 8px 12px; }
+  .surg-table td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 8px 0; }
+  .surg-table td::before { content: attr(data-label); font-weight: 800; color: #4e5a70; }
+  .surg-wrap { background: transparent; }
+}
+@media print {
+  body.surgeon .tools,
+  body.surgeon .no-print,
+  body.surgeon .landing-bar,
+  body.surgeon .aside { display: none !important; }
+  body.surgeon, body.surgeon .page, body.surgeon .device, body.surgeon .screen, body.surgeon .scroll {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  .surg-report { max-width: 100%; }
+}
