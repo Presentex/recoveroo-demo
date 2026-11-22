@@ -951,7 +951,18 @@ function bend() {
   const bends = state.metrics.history.bend || [];
   const cameraView = kneeClip
     ? `<img class="rom-poster" src="assets/videos/rom-knee-bend.jpg" alt="" aria-hidden="true">
-      <video class="rom-clip" src="assets/videos/rom-knee-bend.mp4" poster="assets/videos/rom-knee-bend.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>`
+      <video class="rom-clip" poster="assets/videos/rom-knee-bend.jpg" muted loop playsinline autoplay preload="auto" aria-hidden="true">
+        <source src="assets/videos/rom-knee-bend.mp4" type="video/mp4">
+        <source src="assets/videos/rom-knee-bend.webm" type="video/webm">
+      </video>
+      <svg class="rom-overlay" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <text data-live-angle x="690" y="124" text-anchor="middle" fill="#ffffff" stroke="#5e676b" stroke-width="10" paint-order="stroke fill" font-size="84" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, sans-serif">19°</text>
+        <line data-thigh stroke="#F07862" stroke-width="12" stroke-linecap="round"></line>
+        <line data-shin stroke="#F07862" stroke-width="12" stroke-linecap="round"></line>
+        <circle data-hip r="13" fill="#F07862"></circle>
+        <circle data-knee r="13" fill="#F07862"></circle>
+        <circle data-ankle r="13" fill="#F07862"></circle>
+      </svg>`
     : `<svg viewBox="0 0 320 180" aria-hidden="true">
         <rect width="320" height="180" fill="#13294B"/>
         <circle cx="78" cy="78" r="16" fill="#F4F7FB"/>

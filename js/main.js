@@ -3,6 +3,7 @@ import { celebrateCopy, renderRoute, routeOf } from "./screens.js";
 import {
   L, TODAY, earn, esc, freshMetrics, hydrate, loadSample, save, state,
 } from "./store.js";
+import { romTrack } from "./rom-track.js";
 import { btn, icon, syncVidToggle } from "./ui.js";
 
 const app = document.getElementById("app");
@@ -438,6 +439,35 @@ function armScrollCue() {
   requestAnimationFrame(update);
 }
 
+function paintRom(video) {
+  const overlay = video.parentElement?.querySelector(".rom-overlay");
+  const node = overlay?.querySelector("[data-live-angle]");
+  if (!overlay || !node) return;
+  const samples = romTrack.samples;
+  const span = Math.max(0, (video.currentTime || 0) % romTrack.duration);
+  const index = Math.min(samples.length - 1, Math.round(span * romTrack.fps));
+  const [angle, hx, hy, kx, ky, ax, ay] = samples[index];
+  const shown = Math.round(angle);
+  node.textContent = `${shown}°`;
+  const thigh = overlay.querySelector("[data-thigh]");
+  const shin = overlay.querySelector("[data-shin]");
+  thigh?.setAttribute("x1", hx);
+  thigh?.setAttribute("y1", hy);
+  thigh?.setAttribute("x2", kx);
+  thigh?.setAttribute("y2", ky);
+  shin?.setAttribute("x1", kx);
+  shin?.setAttribute("y1", ky);
+  shin?.setAttribute("x2", ax);
+  shin?.setAttribute("y2", ay);
+  overlay.querySelector("[data-hip]")?.setAttribute("cx", hx);
+  overlay.querySelector("[data-hip]")?.setAttribute("cy", hy);
+  overlay.querySelector("[data-knee]")?.setAttribute("cx", kx);
+  overlay.querySelector("[data-knee]")?.setAttribute("cy", ky);
+  overlay.querySelector("[data-ankle]")?.setAttribute("cx", ax);
+  overlay.querySelector("[data-ankle]")?.setAttribute("cy", ay);
+  state.metrics.romLive = shown;
+}
+
 function armRomClip() {
   app.querySelectorAll("img.rom-poster").forEach((img) => {
     const hide = () => { img.hidden = true; };
@@ -448,10 +478,37 @@ function armRomClip() {
     const missing = () => video.classList.add("is-missing");
     video.addEventListener("error", missing);
     if (video.error) missing();
+    const draw = () => paintRom(video);
+    if (reduceMotion) {
+      video.pause();
+      const park = () => {
+        video.currentTime = romTrack.hold;
+        draw();
+      };
+      if (video.readyState >= 1) park();
+      else video.addEventListener("loadeddata", park, { once: true });
+      return;
+    }
+    const follow = () => {
+      draw();
+      if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(follow);
+    };
+    if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(follow);
+    else {
+      const loop = () => {
+        draw();
+        if (!video.paused && !video.ended) requestAnimationFrame(loop);
+      };
+      video.addEventListener("play", () => requestAnimationFrame(loop));
+      requestAnimationFrame(loop);
+    }
+    video.addEventListener("seeked", draw);
+    video.play()?.catch(() => {});
   });
 }
 
 function armLiveAngle() {
+  if (app.querySelector("video.rom-clip")) return;
   const node = app.querySelector("[data-live-angle]");
   if (!node || !state.profile) return;
   const end = sampleBend(state.profile.track);
