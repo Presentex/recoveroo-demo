@@ -939,6 +939,12 @@ body.landing .landing-nav button[aria-current="true"] {
 body.landing #device { display: none; }
 body.frame .scroll { scrollbar-width: none; }
 body.frame .scroll::-webkit-scrollbar { width: 0; height: 0; }
+body.frame[data-screen="exercise"] .feel-block,
+body.frame[data-screen="exercise"] .dock-primary,
+body.frame[data-screen="exercise"] .scroll > h2,
+body.frame[data-screen="exercise"] .scroll > .group { display: none; }
+body.frame[data-screen="bend"] .sheet-actions,
+body.frame[data-screen="bend"] .result-sheet > .btn { display: none; }
 .hero-phones[hidden] { display: none !important; }
 body.landing .hero-phones {
   position: relative;

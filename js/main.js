@@ -324,6 +324,7 @@ function render() {
     mountHero(false);
   }
   document.body.classList.toggle("frame", isFrame());
+  document.body.dataset.screen = route.name;
   state.speakText = view.speak || "";
   const clinic = view.nav === "clinic";
   document.body.classList.toggle("clinic", clinic);
