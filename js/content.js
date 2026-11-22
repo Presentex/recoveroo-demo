@@ -615,6 +615,7 @@ export const DEMO = [
   { href: "/alert-sample", title: pair("Warning signs say who to call", "Las alertas dicen a quién llamar"), body: pair("Fever, calf pain, or wound trouble opens clear steps: call the surgeon, or call 911.", "Fiebre, dolor en la pantorrilla o problema de la herida abre pasos claros: llamar al cirujano o al 911.") },
   { href: "/clinic", title: pair("Therapy sees who needs them", "Terapia ve quién la necesita"), body: pair("The list puts warning signs first. People on track stay quiet at the bottom.", "La lista pone primero las señales de alerta. Quienes van bien quedan abajo, en calma.") },
   { href: "/summary", title: pair("The surgeon's page is short", "La página del cirujano es corta"), body: pair("Two names, already called by therapy. Nothing to type and nothing to sign.", "Dos nombres, ya llamados por terapia. Nada que escribir y nada que firmar.") },
+  { href: "/surgeons/report", title: pair("A weekly report for the surgeon", "Un informe semanal para el cirujano"), body: pair("Your surgeon gets a weekly report on your progress. Priority, Watch, and On track are easy to scan.", "Su cirujano recibe un informe semanal de su avance. Prioridad, Observar y Va bien se leen fácil.") },
 ];
 
 export const MILESTONES = [

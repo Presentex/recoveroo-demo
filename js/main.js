@@ -270,7 +270,22 @@ function landingCopy() {
       <button type="button" data-action="demo-start">${L("Play the guided tour", "Ver el recorrido guiado")}</button>
       <button type="button" data-href="/setup/hello">${L("Set up a new patient", "Preparar a un paciente nuevo")}</button>
     </div>
+    ${reportPreview()}
   `;
+}
+
+function reportPreview() {
+  return `<button type="button" class="report-preview" data-href="/surgeons/report">
+    <span>
+      <em>${L("Weekly report", "Informe semanal")}</em>
+      <strong>${L("Your surgeon gets a weekly report on your progress", "Su cirujano recibe un informe semanal de su avance")}</strong>
+    </span>
+    <span class="report-mini" aria-hidden="true">
+      <i><b>2</b> ${L("Priority", "Prioridad")}</i>
+      <i><b>5</b> ${L("On track", "Va bien")}</i>
+      <i><b>3</b> ${L("Watch", "Observar")}</i>
+    </span>
+  </button>`;
 }
 
 function render() {

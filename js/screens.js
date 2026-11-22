@@ -187,6 +187,17 @@ function welcome() {
       ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
       ${btn(L("Set up a new patient", "Preparar a un paciente nuevo"), 'data-href="/setup/hello"', "setup")}
     </div>
+    <button type="button" class="report-preview" data-href="/surgeons/report">
+      <span>
+        <em>${L("Weekly report", "Informe semanal")}</em>
+        <strong>${L("Your surgeon gets a weekly report on your progress", "Su cirujano recibe un informe semanal de su avance")}</strong>
+      </span>
+      <span class="report-mini" aria-hidden="true">
+        <i><b>2</b> ${L("Priority", "Prioridad")}</i>
+        <i><b>5</b> ${L("On track", "Va bien")}</i>
+        <i><b>3</b> ${L("Watch", "Observar")}</i>
+      </span>
+    </button>
     <p class="fine">${L(
       "Fictional sample. Not a real clinic and not medical advice. The people on this phone are made up.",
       "Muestra ficticia. No es una clínica real ni un consejo médico. Las personas de este teléfono son inventadas.",
@@ -1478,7 +1489,7 @@ function procedureLabel(id) {
 }
 
 function statusLabel(level) {
-  if (level === "high") return L("High", "Alto");
+  if (level === "high") return L("Priority", "Prioridad");
   if (level === "watch") return L("Watch", "Observar");
   return L("On track", "Va bien");
 }
@@ -1551,7 +1562,7 @@ function surgeonDash() {
   ];
   const statuses = [
     ["all", L("All statuses", "Todos los estados")],
-    ["high", L("High", "Alto")],
+    ["high", L("Priority", "Prioridad")],
     ["watch", L("Watch", "Observar")],
     ["ok", L("On track", "Va bien")],
   ];
@@ -1619,6 +1630,7 @@ function surgeonDetail() {
 
 function surgeonReport() {
   const rows = SURGEON_PANEL.slice().sort((a, b) => ({ high: 0, watch: 1, ok: 2 }[a.level] - { high: 0, watch: 1, ok: 2 }[b.level]));
+  const priority = rows.filter((item) => item.level === "high").length;
   const onTrack = rows.filter((item) => item.level === "ok").length;
   const watch = rows.filter((item) => item.level === "watch").length;
   const low = rows.filter((item) => item.logged <= 2).length;
@@ -1628,11 +1640,12 @@ function surgeonReport() {
       ${surgeonChrome(L("Weekly patient report", "Informe semanal de pacientes"))}
       <p class="fine no-print">${L("One page for easy reference. Example data.", "Una página para consulta fácil. Datos de ejemplo.")}</p>
       <div class="surg-counts">
-        <article><strong>${rows.length}</strong><span>${L("Total patients", "Total de pacientes")}</span></article>
+        <article><strong>${priority}</strong><span>${L("Priority", "Prioridad")}</span></article>
         <article><strong>${onTrack}</strong><span>${L("On track", "Va bien")}</span></article>
         <article><strong>${watch}</strong><span>${L("Watch", "Observar")}</span></article>
         <article><strong>${low}</strong><span>${L("Low engagement", "Poca participación")}</span></article>
       </div>
+      <p class="fine">${L("Priority, On track, and Watch add up to all 10 example patients.", "Prioridad, Va bien y Observar suman los 10 pacientes de ejemplo.")}</p>
       <h2>${L("Patient list", "Lista de pacientes")}</h2>
       <ul class="plain surg-report-list">${rows.map(line).join("")}</ul>
       <section class="block card">
