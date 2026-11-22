@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Recoveroo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      (function () {
+        var path = location.pathname;
+        var marker = "/recoveroo-demo/";
+        var at = path.indexOf(marker);
+        var base = at >= 0 ? path.slice(0, at + marker.length) : path.replace(/[^/]*$/, "");
+        if (!base.endsWith("/")) base += "/";
+        if (path.indexOf("/old-files/") !== -1) {
+          location.replace(base + "old-files/prototype-before-nov21/" + (location.hash || ""));
+          return;
+        }
+        location.replace(base + (location.hash || "#/welcome"));
+      })();
+    </script>
+  </head>
+  <body>
+    <p><a href="./">Recoveroo</a></p>
+  </body>
+</html>

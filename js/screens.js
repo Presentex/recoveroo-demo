@@ -173,17 +173,18 @@ function welcome() {
   );
   return view(`
     <section class="hero-card hero-blue bleed">
-      <h1>${L("Recover at home, on your phone.", "Recupérese en casa, en su teléfono.")}</h1>
+      <p class="kicker">${L("At-home orthopedic recovery", "Recuperación ortopédica en casa")}</p>
+      <h1>${L("A happier, easier recovery at home.", "Una recuperación más alegre y fácil en casa.")}</h1>
       <p>${L(
-        "For hip, knee, shoulder, and other joint and muscle recovery. All you need is your phone.",
-        "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Solo necesita su teléfono.",
+        "For hip, knee, shoulder, and other joint and muscle recovery. A few short exercises, a quick check-in, and a licensed PT team in their corner, all on the phone they already have.",
+        "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Unos ejercicios cortos, un registro rápido y un equipo de PT con licencia, en el teléfono que ya tienen.",
       )}</p>
     </section>
     <div class="stack welcome-actions">
-      ${btn(L("Open Maria's phone", "Abrir el teléfono de Maria"), 'data-action="open-maria"')}
+      ${btn(L("Try Maria's app", "Probar la app de Maria"), 'data-action="open-maria"')}
+      ${btn(L("See how practices use it", "Ver cómo lo usa la clínica"), 'data-href="/clinic"', "secondary")}
       ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
-      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "desk")}
-      ${btn(L("Set up someone new", "Preparar a otra persona"), 'data-href="/setup/hello"', "setup")}
+      ${btn(L("Set up a new patient", "Preparar a un paciente nuevo"), 'data-href="/setup/hello"', "setup")}
     </div>
     <p class="fine">${L(
       "Fictional sample. Not a real clinic and not medical advice. The people on this phone are made up.",
@@ -980,7 +981,7 @@ function bend() {
     <div class="finder-frame camera-sim${kneeClip ? " has-clip" : ""}">
       ${cameraView}
     </div>
-    <section class="result-sheet">
+    <section class="result-sheet meas-card">
       <p class="kicker">${L("Today's measurement", "Medición de hoy")}</p>
       <p class="measure">${reading.angle} <small>${L("degrees", "grados")}</small></p>
       <p class="delta">${reading.delta > 0 ? L(`+${reading.delta} this week`, `+${reading.delta} esta semana`) : L("Same as last week", "Igual que la semana pasada")}</p>
@@ -1281,7 +1282,7 @@ function procedureOf(card) {
     knee: L("Knee replacement", "Reemplazo de rodilla"),
     hip: L("Hip replacement", "Reemplazo de cadera"),
     shoulder: L("Shoulder replacement", "Reemplazo de hombro"),
-    pain: L("Joint pain, no surgery", "Dolor articular, sin cirugía"),
+    pain: L("Muscle or joint pain", "Dolor muscular o articular"),
   };
   return map[card.track] || map.knee;
 }

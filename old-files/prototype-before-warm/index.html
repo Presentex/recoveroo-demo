@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="./favicon.ico?v=3" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=3">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=3">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
+    <link rel="manifest" href="./site.webmanifest?v=3">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#F5F5F7">
+    <meta name="description" content="Recoveroo demo. At-home recovery on your phone. Your care team reviews your progress. Fictional sample.">
+    <title>Recoveroo</title>
+    <link rel="stylesheet" href="./css/app.css">
+  </head>
+  <body>
+    <div class="page">
+      <header class="landing-bar" id="landing-bar" hidden></header>
+      <div class="stage">
+        <div class="landing-copy" id="landing-copy" hidden></div>
+        <aside class="aside">
+          <img src="./logo.svg" width="90" height="48" alt="">
+          <h2 id="aside-title">Recoveroo</h2>
+          <p id="aside-copy">At-home recovery on the phone they already have. For hip, knee, shoulder, and other joint and muscle recovery.</p>
+        </aside>
+        <div class="device" id="device">
+          <div id="app" class="app"></div>
+        </div>
+        <div class="hero-phones" id="hero-phones" hidden>
+          <div class="hero-phone is-bend">
+            <div class="device">
+              <iframe title="Knee bend check" data-src="./index.html?frame=1#/bend" allow="autoplay"></iframe>
+            </div>
+          </div>
+          <div class="hero-phone is-move">
+            <div class="device">
+              <iframe title="Guided exercise" data-src="./index.html?frame=1#/exercise/heel-slides" allow="autoplay"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

@@ -214,7 +214,7 @@ function isFrame() {
 }
 
 function mountHero(on) {
-  const phones = document.getElementById("hero-phones");
+  const phones = document.getElementById("warm-art");
   if (!phones) return;
   phones.hidden = !on;
   phones.querySelectorAll("iframe").forEach((frame) => {
@@ -229,12 +229,12 @@ function mountHero(on) {
 
 function landingBar() {
   const links = [
-    ["#prototype", L("Prototype", "Prototipo")],
+    ["#how", L("How it works", "Cómo funciona")],
     ["#for-patients", L("For patients", "Para pacientes")],
     ["#for-practices", L("For practices", "Para clínicas")],
   ];
   return `
-    <button type="button" class="brand" data-scroll="#prototype">
+    <button type="button" class="brand" data-scroll="#how">
       <img src="./logo.svg" width="52" height="28" alt="">
       <span>recoveroo</span>
     </button>
@@ -242,42 +242,30 @@ function landingBar() {
       ${links.map(([href, label]) => `<button type="button" data-scroll="${href}">${label}</button>`).join("")}
       <button type="button" data-href="/clinic">${L("Care team", "Equipo")}</button>
     </nav>
-    <p class="landing-pill">${L("Interactive demo, fictional data", "Demo interactiva, datos ficticios")}</p>
+    <button type="button" class="book-demo" data-action="demo-start">${L("Book a demo", "Reservar una demo")}</button>
   `;
 }
 
 function landingCopy() {
-  const cards = [
-    ["check", L("Daily check-in", "Registro diario"), L("Pain, swelling, and sleep in a few large, simple taps.", "Dolor, hinchazón y sueño en unos toques grandes y simples.")],
-    ["camera", L("Bend check", "Revisión de la flexión"), L("Camera first, with a drag fallback and PT review.", "Primero la cámara, con una opción de arrastrar y revisión del PT.")],
-    ["move", L("Guided exercises", "Ejercicios guiados"), L("Short videos for each step of the plan.", "Videos cortos para cada paso del plan.")],
-    ["message", L("Care team review", "Revisión del equipo"), L("The care team reaches out when something looks off.", "El equipo se comunica cuando algo no se ve bien.")],
-  ];
   return `
-    <p class="eyebrow" id="prototype">${L("At-home orthopedic recovery", "Recuperación ortopédica en casa")}</p>
-    <h1>${L("Recovery support between visits, on the phone patients already have.", "Apoyo para la recuperación entre visitas, en el teléfono que los pacientes ya tienen.")}</h1>
+    <p class="warm-tag" id="how"><img src="./logo.svg" alt="">${L("At-home orthopedic recovery", "Recuperación ortopédica en casa")}</p>
+    <h1 id="for-patients">${L("A happier, easier recovery <em>at home.</em>", "Una recuperación más alegre y fácil <em>en casa.</em>")}</h1>
     <p class="landing-lede">${L(
-      "For hip, knee, shoulder, and other joint and muscle recovery. Patients follow a short daily plan, and a licensed PT and PTA team reviews their progress.",
-      "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Los pacientes siguen un plan diario corto, y un equipo de PT y PTA con licencia revisa su avance.",
+      "For hip, knee, shoulder, and other joint and muscle recovery. A few short exercises, a quick check-in, and a licensed PT team in their corner, all on the phone they already have.",
+      "Para la recuperación de cadera, rodilla, hombro y de otros músculos y articulaciones. Unos ejercicios cortos, un registro rápido y un equipo de PT con licencia, en el teléfono que ya tienen.",
     )}</p>
-    <div class="feature-grid" id="for-patients">
-      ${cards.map(([name, title, body]) => `<article class="feature-card">
-        <span class="icon-tile">${icon(name)}</span>
-        <h2>${title}</h2>
-        <p>${body}</p>
-      </article>`).join("")}
-    </div>
-    <section class="practice-band" id="for-practices">
-      <p><strong>${L("Built for the practice:", "Hecho para la clínica:")}</strong> ${L(
-        "Better visibility between visits, and the practice gets an additional revenue stream.",
-        "Mejor visibilidad entre visitas, y la clínica obtiene un ingreso adicional.",
-      )}</p>
-    </section>
-    <div class="landing-actions">
+    <div class="warm-ctas">
       ${btn(L("Try Maria's app", "Probar la app de Maria"), 'data-action="open-maria"')}
-      ${btn(L("Play the guided tour", "Ver el recorrido guiado"), 'data-action="demo-start"', "navy")}
-      ${btn(L("Open the care team desk", "Abrir el escritorio del equipo"), 'data-href="/clinic"', "desk")}
-      ${btn(L("Set up a new patient", "Preparar a un paciente nuevo"), 'data-href="/setup/hello"', "setup")}
+      ${btn(L("See how practices use it", "Ver cómo lo usa la clínica"), 'data-href="/clinic"', "secondary")}
+    </div>
+    <div class="warm-badges" id="for-practices">
+      <span>${L("Big, easy text", "Texto grande y fácil")}</span>
+      <span>${L("Read aloud and Spanish", "Lectura en voz alta y español")}</span>
+      <span>${L("Licensed PT team", "Equipo de PT con licencia")}</span>
+    </div>
+    <div class="warm-more">
+      <button type="button" data-action="demo-start">${L("Play the guided tour", "Ver el recorrido guiado")}</button>
+      <button type="button" data-href="/setup/hello">${L("Set up a new patient", "Preparar a un paciente nuevo")}</button>
     </div>
   `;
 }

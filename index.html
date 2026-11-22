@@ -2,14 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="./favicon.ico?v=3" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=3">
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=3">
-    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=3">
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=3">
-    <link rel="manifest" href="./site.webmanifest?v=3">
+    <link rel="icon" href="./favicon.ico?v=4" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg?v=4">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png?v=4">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png?v=4">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png?v=4">
+    <link rel="manifest" href="./site.webmanifest?v=4">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#F5F5F7">
+    <meta name="theme-color" content="#FBF3EA">
     <meta name="description" content="Recoveroo demo. At-home recovery on your phone. Your care team reviews your progress. Fictional sample.">
     <title>Recoveroo</title>
     <link rel="stylesheet" href="./css/app.css">
@@ -27,17 +30,16 @@
         <div class="device" id="device">
           <div id="app" class="app"></div>
         </div>
-        <div class="hero-phones" id="hero-phones" hidden>
-          <div class="hero-phone is-bend">
+        <div class="warm-art" id="warm-art" hidden>
+          <div class="warm-blob"><img src="./assets/hero-home.jpg" alt=""></div>
+          <img class="warm-roo" src="./logo.svg" alt="">
+          <div class="warm-phone">
             <div class="device">
               <iframe title="Knee bend check" data-src="./index.html?frame=1#/bend" allow="autoplay"></iframe>
             </div>
           </div>
-          <div class="hero-phone is-move">
-            <div class="device">
-              <iframe title="Guided exercise" data-src="./index.html?frame=1#/exercise/heel-slides" allow="autoplay"></iframe>
-            </div>
-          </div>
+          <div class="bubble bubble-done" id="bubble-done"><i>✓</i><div>Both sets done!<small>Heel slides, 10 of 10</small></div></div>
+          <div class="bubble bubble-rev" id="bubble-rev"><i>↗</i><div>Built for the practice<small>An additional revenue stream</small></div></div>
         </div>
       </div>
     </div>
