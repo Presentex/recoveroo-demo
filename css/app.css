@@ -962,19 +962,10 @@ body.landing .warm-blob {
   background: #f07862;
 }
 body.landing .warm-blob img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
-body.landing .warm-roo {
-  position: absolute;
-  left: 8px;
-  top: 36px;
-  width: 180px;
-  height: auto;
-  transform: rotate(-8deg);
-  z-index: 2;
-}
 body.landing .warm-phone {
   position: absolute;
-  left: 4%;
-  top: 132px;
+  left: 6%;
+  top: 78px;
   z-index: 3;
   width: 230px;
   height: 440px;
