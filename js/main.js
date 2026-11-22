@@ -208,6 +208,24 @@ function wideWelcome() {
   return window.matchMedia("(min-width: 1100px)").matches;
 }
 
+function isFrame() {
+  return new URLSearchParams(location.search).get("frame") === "1";
+}
+
+function mountHero(on) {
+  const phones = document.getElementById("hero-phones");
+  if (!phones) return;
+  phones.hidden = !on;
+  phones.querySelectorAll("iframe").forEach((frame) => {
+    const next = frame.dataset.src || "";
+    if (!on) {
+      if (frame.getAttribute("src")) frame.removeAttribute("src");
+      return;
+    }
+    if (frame.getAttribute("src") !== next) frame.setAttribute("src", next);
+  });
+}
+
 function landingBar() {
   const links = [
     ["#prototype", L("Prototype", "Prototipo")],
@@ -275,7 +293,7 @@ function render() {
     }
   }
   if (state.metrics?.stepsToday >= 2000) earn("steps2k");
-  const landing = route.name === "welcome" && wideWelcome() && !state.demo;
+  const landing = route.name === "welcome" && wideWelcome() && !state.demo && !isFrame();
   document.body.classList.toggle("landing", landing);
   const bar = document.getElementById("landing-bar");
   const copy = document.getElementById("landing-copy");
@@ -283,8 +301,7 @@ function render() {
   let view;
   if (landing) {
     if (state.profile?.source !== "sample") loadSample();
-    phoneRoute = { name: "today", id: "", rest: [], next: "", parts: ["today"] };
-    view = renderRoute(phoneRoute);
+    view = { html: "", speak: "", footer: "", nav: "none", active: "" };
     if (bar) {
       bar.hidden = false;
       bar.innerHTML = landingBar();
@@ -293,6 +310,7 @@ function render() {
       copy.hidden = false;
       copy.innerHTML = landingCopy();
     }
+    mountHero(true);
   } else {
     if (bar) {
       bar.hidden = true;
@@ -303,7 +321,9 @@ function render() {
       copy.innerHTML = "";
     }
     view = renderRoute(route);
+    mountHero(false);
   }
+  document.body.classList.toggle("frame", isFrame());
   state.speakText = view.speak || "";
   const clinic = view.nav === "clinic";
   document.body.classList.toggle("clinic", clinic);
