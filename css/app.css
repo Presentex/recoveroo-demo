@@ -724,6 +724,13 @@ input[type="range"] { width: 100%; accent-color: #f07862; height: 36px; }
 }
 .desk-nav nav button[aria-current="page"] { background: #f07862; color: #fff; }
 .desk-phone { margin-top: auto; background: #13294b; color: #fff; border-radius: 999px; text-align: center; }
+@media (max-width: 800px) {
+  .screen.is-desk { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .desk-nav { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px; }
+  .desk-nav nav { flex-direction: row; flex-wrap: wrap; margin-top: 0; }
+  .desk-phone { margin-top: 0; width: auto; }
+  .screen.is-desk .scroll { padding: 16px 12px 32px; }
+}
 .screen.is-desk .scroll { background: var(--cream); padding: 28px 28px 48px; }
 .screen.is-desk .dock-primary, .screen.is-desk .nav { display: none; }
 .desk-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
@@ -1101,4 +1108,7 @@ body.surgeon .scroll { background: var(--cream); padding: 24px 20px 56px; }
     border: 0 !important;
   }
   .surg-report { max-width: 100%; }
+}
+@media (max-width: 800px) {
+  .desk-stats { grid-template-columns: 1fr 1fr; }
 }

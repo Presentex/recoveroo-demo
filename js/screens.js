@@ -1334,12 +1334,12 @@ function clinic(mode = "patients") {
     settings: L("Settings", "Ajustes"),
   };
   const speak = L(
-    `Patients for Sarah Chen. ${all.length} active. ${high} high risk. ${watch} on the watch list.`,
-    `Pacientes de Sarah Chen. ${all.length} activos. ${high} de alto riesgo. ${watch} en observación.`,
+    `Patients for Sarah Chen. ${all.length} active. ${high} priority. ${watch} on the watch list.`,
+    `Pacientes de Sarah Chen. ${all.length} activos. ${high} en prioridad. ${watch} en observación.`,
   );
   const stats = `<div class="desk-stats">
     <article><strong>${all.length}</strong><span>${L("Active patients", "Pacientes activos")}</span></article>
-    <article><strong>${high}</strong><span>${L("High risk", "Alto riesgo")}</span></article>
+    <article><strong>${high}</strong><span>${L("Priority", "Prioridad")}</span></article>
     <article><strong>${watch}</strong><span>${L("Watch list", "En observación")}</span></article>
     <article><strong>${ready}</strong><span>${L("Billing ready", "Cobro listo")}</span></article>
     <article><strong>${high + watch}</strong><span>${L("Calls due", "Llamadas pendientes")}</span></article>
@@ -1364,7 +1364,7 @@ function clinic(mode = "patients") {
     <tbody>${cards.map((card, index) => {
       const reason = typeof card.reason === "string" ? card.reason : t(card.reason);
       const contact = card.live ? card.contact : t(card.contact);
-      const risk = card.level === "high" ? L("High", "Alto") : card.level === "watch" ? L("Watch", "Observar") : L("On track", "Va bien");
+      const risk = card.level === "high" ? L("Priority", "Prioridad") : card.level === "watch" ? L("Watch", "Observar") : L("On track", "Va bien");
       return `<tr data-href="/clinic/${card.id}" ${index === 0 ? 'data-tour="patient"' : ""}>
         <td><strong>${esc(card.name)}</strong></td>
         <td><span class="risk risk-${card.level}">${risk}</span></td>
